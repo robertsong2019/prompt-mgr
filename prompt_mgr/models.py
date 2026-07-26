@@ -50,7 +50,7 @@ class Template:
         return (
             query_lower in self.name.lower()
             or query_lower in self.content.lower()
-            or query_lower in self.description.lower() if self.description else False
+            or (query_lower in self.description.lower() if self.description else False)
         )
 
     def has_tags(self, tags: List[str]) -> bool:
@@ -94,7 +94,7 @@ class TemplateCollection:
         """List all templates."""
         return list(self.templates.values())
 
-    def search(self, query: str, tags: Optional[List[str]] = None) -> List[Template]:
+    def search(self, query: str = "", tags: Optional[List[str]] = None) -> List[Template]:
         """Search templates by query and/or tags."""
         results = []
         for template in self.templates.values():
