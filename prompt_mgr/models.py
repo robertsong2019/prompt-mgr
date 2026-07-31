@@ -134,3 +134,17 @@ class TemplateCollection:
         """Create collection from JSON string."""
         data = json.loads(json_str)
         return cls.from_dict(data)
+
+    def tag_summary(self) -> dict:
+        """Return a summary of all tags and their template counts.
+        
+        Returns:
+            Dictionary mapping tag name to number of templates using it.
+            Sorted by count descending, then alphabetically.
+        """
+        freq = {}
+        for template in self.templates.values():
+            for tag in template.tags:
+                freq[tag] = freq.get(tag, 0) + 1
+        # Sort by count desc, then name asc
+        return dict(sorted(freq.items(), key=lambda x: (-x[1], x[0])))
