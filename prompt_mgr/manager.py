@@ -223,6 +223,87 @@ class PromptManager:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(self.collection.to_dict(), f, indent=2)
 
+    def clone_template(self, source_name: str, new_name: str) -> Template:
+        """Clone an existing template with a new name.
+        
+        Args:
+            source_name: Name of the template to clone
+            new_name: Name for the cloned template
+        
+        Returns:
+            The cloned Template
+        
+        Raises:
+            ValueError: If source doesn't exist or new name already taken
+        """
+        source = self.collection.get(source_name)
+        if not source:
+            raise ValueError(f"Template not found: {source_name}")
+        
+        if self.collection.get(new_name):
+            raise ValueError(f"Template already exists: {new_name}")
+        
+        if not validate_template_name(new_name):
+            raise ValueError(
+                f"Invalid template name: {new_name}. "
+                "Use only alphanumeric characters, hyphens, and underscores."
+            )
+        
+        clone = Template(
+            name=new_name,
+            content=source.content,
+            tags=list(source.tags),
+            description=source.description,
+        )
+        
+        self.collection.add(clone)
+        self._save_templates()
+        return clone
+
+    def get_stats(self) -> dict:
+        """Return statistics about the template collection.
+        
+        Returns:
+            Dictionary with keys:
+            - total: total number of templates
+            - tag_frequency: dict of tag -> count
+            - total_variables: sum of unique variables across all templates
+            - avg_content_length: mean content length in characters
+            - templates_with_variables: count of templates that have variables
+        """
+        templates = self.collection.list_all()
+        total = len(templates)
+        
+        if total == 0:
+            return {
+                "total": 0,
+                "tag_frequency": {},
+                "total_variables": 0,
+                "avg_content_length": 0,
+                "templates_with_variables": 0,
+            }
+        
+        tag_freq = {}
+        total_vars = 0
+        total_content_len = 0
+        with_vars = 0
+        
+        for t in templates:
+            for tag in t.tags:
+                tag_freq[tag] = tag_freq.get(tag, 0) + 1
+            total_vars += len(t.extract_variables())
+            total_content_len += len(t.content)
+            if t.extract_variables():
+                with_vars += 1
+        
+        return {
+            "total": total,
+            "tag_frequency": tag_freq,
+            "total_variables": total_vars,
+            "avg_content_length": total_content_len // total,
+            "templates_with_variables": with_vars,
+        }
+
     def import_templates(self, input_file: Path, overwrite: bool = False) -> int:
         """Import templates from a JSON file.
         
