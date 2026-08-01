@@ -63,6 +63,62 @@ class Template:
         pattern = r'\{\{(\w+)\}\}'
         return list(set(re.findall(pattern, self.content)))
 
+    def render(self, variables: dict) -> str:
+        """Render the template with variable substitution.
+        
+        Args:
+            variables: Dictionary of variable names and values
+        
+        Returns:
+            Rendered template content
+        
+        Raises:
+            ValueError: If required variables are missing
+        """
+        import re as _re
+        
+        required = self.extract_variables()
+        missing = set(required) - set(variables.keys())
+        if missing:
+            raise ValueError(
+                f"Missing variables: {', '.join(sorted(missing))}. "
+                f"Required: {', '.join(sorted(required))}"
+            )
+        
+        result = self.content
+        for key, value in variables.items():
+            pattern = r'\{\{' + _re.escape(key) + r'\}\}'
+            result = _re.sub(pattern, value, result)
+        return result
+
+    def to_markdown(self) -> str:
+        """Export template as a formatted markdown block.
+        
+        Returns:
+            Markdown-formatted string with template metadata and content.
+        """
+        lines = [
+            f"## {self.name}",
+            "",
+        ]
+        if self.description:
+            lines.append(f"*{self.description}*")
+            lines.append("")
+        if self.tags:
+            lines.append(f"**Tags:** {', '.join(self.tags)}")
+            lines.append("")
+        vars_ = self.extract_variables()
+        if vars_:
+            lines.append(f"**Variables:** {', '.join(sorted(vars_))}")
+            lines.append("")
+        lines.append(f"**Created:** {self.created_at}  ")
+        lines.append(f"**Updated:** {self.updated_at}")
+        lines.append("")
+        lines.append("```")
+        lines.append(self.content)
+        lines.append("```")
+        return "\n".join(lines)
+
     def __str__(self) -> str:
         """String representation."""
         tags_str = ", ".join(self.tags) if self.tags else "no tags"
@@ -148,3 +204,23 @@ class TemplateCollection:
                 freq[tag] = freq.get(tag, 0) + 1
         # Sort by count desc, then name asc
         return dict(sorted(freq.items(), key=lambda x: (-x[1], x[0])))
+
+    def find_duplicates(self) -> dict:
+        """Find templates with identical content.
+        
+        Returns:
+            Dictionary mapping content hash to list of template names
+            that share that content. Only includes entries with 2+ duplicates.
+        """
+        import hashlib
+        
+        groups = {}
+        for template in self.templates.values():
+            h = hashlib.sha256(template.content.encode()).hexdigest()
+            groups.setdefault(h, []).append(template.name)
+        
+        return {
+            h: sorted(names)
+            for h, names in groups.items()
+            if len(names) > 1
+        }
