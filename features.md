@@ -17,7 +17,7 @@
 ### Template Model
 - [x] **F1**: `Template.render(variables)` — render directly on model (eliminates manager dependency) ✅ 2026-08-01
 - [x] **F2**: `Template.to_markdown()` — export as formatted markdown block ✅ 2026-08-01
-- [ ] **F3**: `Template.diff(other)` — compare two templates, return field-level differences
+- [x] **F3**: `Template.diff(other)` — compare two templates, return field-level differences ✅ 2026-08-02
 
 ### Collection Operations
 - [x] **F4**: `TemplateCollection.find_duplicates()` — detect templates with identical content ✅ 2026-08-01

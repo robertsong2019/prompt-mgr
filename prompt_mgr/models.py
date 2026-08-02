@@ -119,6 +119,39 @@ class Template:
         lines.append("```")
         return "\n".join(lines)
 
+    def diff(self, other: "Template") -> dict:
+        """Compare this template with another, return field-level differences.
+
+        Args:
+            other: The template to compare against.
+
+        Returns:
+            Dictionary mapping changed field names to their values.
+            For scalar fields: ``{field: {"self": old, "other": new}}``
+            For tags: ``{"tags": {"added": [...], "removed": [...]}}``
+            Empty dict means templates are identical (excluding timestamps
+            if they happen to match).
+        """
+        result = {}
+
+        # Scalar fields
+        for field_name in ("name", "content", "description"):
+            self_val = getattr(self, field_name)
+            other_val = getattr(other, field_name)
+            if self_val != other_val:
+                result[field_name] = {"self": self_val, "other": other_val}
+
+        # Tags (set comparison)
+        self_tags = set(self.tags)
+        other_tags = set(other.tags)
+        if self_tags != other_tags:
+            result["tags"] = {
+                "added": sorted(other_tags - self_tags),
+                "removed": sorted(self_tags - other_tags),
+            }
+
+        return result
+
     def __str__(self) -> str:
         """String representation."""
         tags_str = ", ".join(self.tags) if self.tags else "no tags"
