@@ -238,6 +238,65 @@ class TemplateCollection:
         # Sort by count desc, then name asc
         return dict(sorted(freq.items(), key=lambda x: (-x[1], x[0])))
 
+    def sort_by(self, field: str = "name", reverse: bool = False) -> List[Template]:
+        """Return templates sorted by a given field.
+
+        Args:
+            field: One of 'name', 'created_at', 'updated_at',
+                   'content_length', 'tag_count'.
+            reverse: If True, sort descending.
+
+        Returns:
+            New list of templates sorted by the specified field.
+
+        Raises:
+            ValueError: If field is not recognized.
+        """
+        valid_fields = {
+            "name", "created_at", "updated_at",
+            "content_length", "tag_count",
+        }
+        if field not in valid_fields:
+            raise ValueError(
+                f"Invalid sort field: {field}. "
+                f"Valid fields: {', '.join(sorted(valid_fields))}"
+            )
+
+        def sort_key(t: Template):
+            if field == "content_length":
+                return len(t.content)
+            if field == "tag_count":
+                return len(t.tags)
+            return getattr(t, field)
+
+        return sorted(self.templates.values(), key=sort_key, reverse=reverse)
+
+    def merge(self, other: "TemplateCollection") -> dict:
+        """Merge another collection into this one.
+
+        Templates unique to ``other`` are added directly.
+        Templates in both are skipped (self wins by default).
+
+        Args:
+            other: The collection to merge from.
+
+        Returns:
+            Summary dict with keys:
+            - ``added``: list of template names imported from other.
+            - ``skipped``: list of names that already existed (kept self's version).
+        """
+        added: List[str] = []
+        skipped: List[str] = []
+
+        for template in other.list_all():
+            if template.name in self.templates:
+                skipped.append(template.name)
+            else:
+                self.templates[template.name] = template
+                added.append(template.name)
+
+        return {"added": sorted(added), "skipped": sorted(skipped)}
+
     def find_duplicates(self) -> dict:
         """Find templates with identical content.
         

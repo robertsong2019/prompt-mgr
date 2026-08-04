@@ -21,8 +21,8 @@
 
 ### Collection Operations
 - [x] **F4**: `TemplateCollection.find_duplicates()` — detect templates with identical content ✅ 2026-08-01
-- [ ] **F5**: `TemplateCollection.sort_by(field, reverse)` — sort by name/created_at/updated_at/content_length
-- [ ] **F6**: `TemplateCollection.merge(other)` — merge two collections, report conflicts
+- [x] **F5**: `TemplateCollection.sort_by(field, reverse)` — sort by name/created_at/updated_at/content_length/tag_count ✅ 2026-08-04
+- [x] **F6**: `TemplateCollection.merge(other)` — merge two collections, report conflicts ✅ 2026-08-04
 
 ### Manager Operations
 - [ ] **F7**: `PromptManager.rename_template(old, new)` — rename preserving data

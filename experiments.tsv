@@ -1,0 +1,2 @@
+timestamp	commit	metric	value	status	description
+2026-08-02T23:00	f9e553e	test_pass_rate	154/154	keep	F3: Template.diff(other) — field-level comparison, ignores timestamps, tags set-diff
