@@ -304,6 +304,92 @@ class PromptManager:
             "templates_with_variables": with_vars,
         }
 
+    def rename_template(self, old_name: str, new_name: str) -> Template:
+        """Rename a template preserving all its data.
+        
+        Args:
+            old_name: Current template name
+            new_name: New template name
+        
+        Returns:
+            The renamed Template
+        
+        Raises:
+            ValueError: If old name doesn't exist, new name already taken,
+                       or new name is invalid
+        """
+        template = self.collection.get(old_name)
+        if not template:
+            raise ValueError(f"Template not found: {old_name}")
+        
+        if old_name == new_name:
+            return template
+        
+        if self.collection.get(new_name):
+            raise ValueError(f"Template already exists: {new_name}")
+        
+        if not validate_template_name(new_name):
+            raise ValueError(
+                f"Invalid template name: {new_name}. "
+                "Use only alphanumeric characters, hyphens, and underscores."
+            )
+        
+        # Delete old, add with new name (preserves content/tags/description)
+        self.collection.delete(old_name)
+        renamed = Template(
+            name=new_name,
+            content=template.content,
+            tags=list(template.tags),
+            description=template.description,
+        )
+        self.collection.add(renamed)
+        self._save_templates()
+        return renamed
+
+    def add_tag(self, name: str, tag: str) -> Template:
+        """Add a single tag to a template.
+        
+        Args:
+            name: Template name
+            tag: Tag to add
+        
+        Returns:
+            Updated Template
+        
+        Raises:
+            ValueError: If template doesn't exist
+        """
+        template = self.collection.get(name)
+        if not template:
+            raise ValueError(f"Template not found: {name}")
+        if tag not in template.tags:
+            template.tags.append(tag)
+            template.update_timestamp()
+            self._save_templates()
+        return template
+
+    def remove_tag(self, name: str, tag: str) -> Template:
+        """Remove a single tag from a template.
+        
+        Args:
+            name: Template name
+            tag: Tag to remove
+        
+        Returns:
+            Updated Template
+        
+        Raises:
+            ValueError: If template doesn't exist
+        """
+        template = self.collection.get(name)
+        if not template:
+            raise ValueError(f"Template not found: {name}")
+        if tag in template.tags:
+            template.tags.remove(tag)
+            template.update_timestamp()
+            self._save_templates()
+        return template
+
     def import_templates(self, input_file: Path, overwrite: bool = False) -> int:
         """Import templates from a JSON file.
         
