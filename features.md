@@ -25,8 +25,8 @@
 - [x] **F6**: `TemplateCollection.merge(other)` — merge two collections, report conflicts ✅ 2026-08-04
 
 ### Manager Operations
-- [ ] **F7**: `PromptManager.rename_template(old, new)` — rename preserving data
-- [ ] **F8**: `PromptManager.add_tag(name, tag)` / `remove_tag(name, tag)` — tag management without full update
+- [x] **F7**: `PromptManager.rename_template(old, new)` — rename preserving data ✅ 2026-08-08
+- [x] **F8**: `PromptManager.add_tag(name, tag)` / `remove_tag(name, tag)` — tag management without full update ✅ 2026-08-08
 
 ## Priorities
 **Tonight:** F1 (render on model), F2 (to_markdown), F4 (find_duplicates)
