@@ -119,6 +119,26 @@ class Template:
         lines.append("```")
         return "\n".join(lines)
 
+    def to_json(self) -> str:
+        """Serialize this template to a JSON string.
+
+        Returns:
+            JSON string representation of the template.
+        """
+        return json.dumps(self.to_dict(), indent=2)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "Template":
+        """Create a template from a JSON string.
+
+        Args:
+            json_str: JSON string representation of a template.
+
+        Returns:
+            A Template instance.
+        """
+        return cls.from_dict(json.loads(json_str))
+
     def diff(self, other: "Template") -> dict:
         """Compare this template with another, return field-level differences.
 
@@ -296,6 +316,34 @@ class TemplateCollection:
                 added.append(template.name)
 
         return {"added": sorted(added), "skipped": sorted(skipped)}
+
+    def filter(self, predicate) -> List[Template]:
+        """Filter templates by a predicate function.
+
+        Args:
+            predicate: A function ``(Template) -> bool``.
+
+        Returns:
+            List of templates matching the predicate.
+        """
+        return [t for t in self.templates.values() if predicate(t)]
+
+    def group_by_tag(self) -> dict:
+        """Group templates by their tags.
+
+        Returns:
+            Dictionary mapping each tag to a sorted list of template names.
+            Templates without tags are grouped under the key ``"__untagged__"``.
+        """
+        groups: dict = {}
+        for template in self.templates.values():
+            if not template.tags:
+                groups.setdefault("__untagged__", []).append(template.name)
+            else:
+                for tag in template.tags:
+                    groups.setdefault(tag, []).append(template.name)
+        # Sort names within each group
+        return {tag: sorted(names) for tag, names in groups.items()}
 
     def find_duplicates(self) -> dict:
         """Find templates with identical content.
