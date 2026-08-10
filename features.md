@@ -28,5 +28,10 @@
 - [x] **F7**: `PromptManager.rename_template(old, new)` — rename preserving data ✅ 2026-08-08
 - [x] **F8**: `PromptManager.add_tag(name, tag)` / `remove_tag(name, tag)` — tag management without full update ✅ 2026-08-08
 
+### Collection & Model (Round 3)
+- [x] **F9**: `TemplateCollection.filter(predicate)` — filter by arbitrary predicate function ✅ 2026-08-09
+- [x] **F10**: `Template.to_json()` / `Template.from_json()` — single-template JSON serialization ✅ 2026-08-09
+- [x] **F11**: `TemplateCollection.group_by_tag()` — group templates by tag, un tagged grouped separately ✅ 2026-08-09
+
 ## Priorities
 **Tonight:** F1 (render on model), F2 (to_markdown), F4 (find_duplicates)

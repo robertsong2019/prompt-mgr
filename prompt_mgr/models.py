@@ -345,6 +345,41 @@ class TemplateCollection:
         # Sort names within each group
         return {tag: sorted(names) for tag, names in groups.items()}
 
+    def find_similar(self, name: str, top_k: int = 5) -> List[tuple]:
+        """Find templates similar to the named template using token Jaccard.
+
+        Args:
+            name: The template to compare against.
+            top_k: Maximum number of results to return.
+
+        Returns:
+            List of ``(template_name, jaccard_score)`` tuples sorted by
+            score descending.  The target template itself is excluded.
+
+        Raises:
+            ValueError: If the named template does not exist.
+        """
+        if name not in self.templates:
+            raise ValueError(f"Template not found: {name}")
+
+        target_tokens = set(self.templates[name].content.lower().split())
+        results = []
+
+        for template in self.templates.values():
+            if template.name == name:
+                continue
+            other_tokens = set(template.content.lower().split())
+            if not target_tokens and not other_tokens:
+                score = 1.0
+            elif not target_tokens or not other_tokens:
+                score = 0.0
+            else:
+                score = len(target_tokens & other_tokens) / len(target_tokens | other_tokens)
+            results.append((template.name, round(score, 4)))
+
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
+
     def find_duplicates(self) -> dict:
         """Find templates with identical content.
         
