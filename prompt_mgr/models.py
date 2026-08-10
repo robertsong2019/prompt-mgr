@@ -345,6 +345,38 @@ class TemplateCollection:
         # Sort names within each group
         return {tag: sorted(names) for tag, names in groups.items()}
 
+    def search_by_variables(self, variables: List[str], match: str = "any") -> List[Template]:
+        """Find templates that use specific variables.
+
+        Args:
+            variables: List of variable names to search for (without
+                the ``{{``/``}}`` delimiters).
+            match: One of ``"any"`` (default) or ``"all"``.
+                "any" returns templates that use at least one of the
+                specified variables; "all" returns only templates that
+                use every specified variable.
+
+        Returns:
+            List of matching Templates.
+
+        Raises:
+            ValueError: If ``match`` is not ``"any"`` or ``"all"``.
+        """
+        if match not in ("any", "all"):
+            raise ValueError(f"Invalid match mode: {match}. Use 'any' or 'all'.")
+
+        want = set(variables)
+        results = []
+        for template in self.templates.values():
+            have = set(template.extract_variables())
+            if match == "all":
+                if want <= have:
+                    results.append(template)
+            else:  # any
+                if want & have:
+                    results.append(template)
+        return results
+
     def find_similar(self, name: str, top_k: int = 5) -> List[tuple]:
         """Find templates similar to the named template using token Jaccard.
 
