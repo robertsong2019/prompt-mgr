@@ -377,6 +377,45 @@ class TemplateCollection:
                     results.append(template)
         return results
 
+    def content_stats(self) -> dict:
+        """Aggregate content statistics for the entire collection.
+
+        Returns:
+            Dictionary with:
+            - ``total_chars``: total characters across all templates.
+            - ``total_tokens``: total whitespace-split tokens.
+            - ``avg_chars``: mean characters per template.
+            - ``avg_tokens``: mean tokens per template.
+            - ``longest``: name of template with most characters.
+            - ``shortest``: name of template with fewest characters.
+            - ``total_variables``: total unique variable slots.
+        """
+        templates = self.list_all()
+        if not templates:
+            return {
+                "total_chars": 0, "total_tokens": 0,
+                "avg_chars": 0, "avg_tokens": 0,
+                "longest": None, "shortest": None,
+                "total_variables": 0,
+            }
+
+        total_chars = sum(len(t.content) for t in templates)
+        total_tokens = sum(len(t.content.split()) for t in templates)
+        longest = max(templates, key=lambda t: len(t.content)).name
+        shortest = min(templates, key=lambda t: len(t.content)).name
+        total_vars = sum(len(t.extract_variables()) for t in templates)
+        n = len(templates)
+
+        return {
+            "total_chars": total_chars,
+            "total_tokens": total_tokens,
+            "avg_chars": total_chars // n,
+            "avg_tokens": total_tokens // n,
+            "longest": longest,
+            "shortest": shortest,
+            "total_variables": total_vars,
+        }
+
     def find_similar(self, name: str, top_k: int = 5) -> List[tuple]:
         """Find templates similar to the named template using token Jaccard.
 
