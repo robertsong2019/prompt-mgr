@@ -33,5 +33,10 @@
 - [x] **F10**: `Template.to_json()` / `Template.from_json()` — single-template JSON serialization ✅ 2026-08-09
 - [x] **F11**: `TemplateCollection.group_by_tag()` — group templates by tag, un tagged grouped separately ✅ 2026-08-09
 
+### Collection & Model (Round 4)
+- [x] **F12**: `TemplateCollection.find_similar(name, top_k)` — token Jaccard similarity search ✅ 2026-08-10
+- [x] **F13**: `TemplateCollection.search_by_variables(vars, match)` — find templates by required variables (any/all) ✅ 2026-08-10
+- [x] **F14**: `TemplateCollection.content_stats()` — aggregate content metrics (chars/tokens/vars/longest/shortest) ✅ 2026-08-10
+
 ## Priorities
 **Tonight:** F1 (render on model), F2 (to_markdown), F4 (find_duplicates)

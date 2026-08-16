@@ -88,7 +88,9 @@ class Template:
         result = self.content
         for key, value in variables.items():
             pattern = r'\{\{' + _re.escape(key) + r'\}\}'
-            result = _re.sub(pattern, value, result)
+            # Literal replacement: lambda avoids re.sub interpreting
+            # backslash escapes / group refs in values (e.g. r"\1", "\n").
+            result = _re.sub(pattern, lambda _m, _v=value: _v, result)
         return result
 
     def to_markdown(self) -> str:
@@ -450,6 +452,51 @@ class TemplateCollection:
 
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
+
+    def export_markdown(self, tags: Optional[List[str]] = None, sort_by: str = "name") -> str:
+        """Export the collection as a single markdown document — F15.
+
+        Args:
+            tags: Optional tag filter — only templates with all the
+                specified tags are exported (None exports everything).
+            sort_by: Field to sort sections by: ``name`` (default),
+                ``created`` (oldest first) or ``updated`` (most recently
+                updated last).
+
+        Returns:
+            Markdown string: H1 title, generation timestamp, table of
+            contents linking to each template section, then one
+            ``to_markdown()`` block per template.
+        """
+        from datetime import datetime
+
+        templates = self.list_all()
+        if tags:
+            templates = [t for t in templates if t.has_tags(tags)]
+
+        sorters = {
+            "name": lambda t: t.name,
+            "created": lambda t: t.created_at,
+            "updated": lambda t: t.updated_at,
+        }
+        key_fn = sorters.get(sort_by, sorters["name"])
+        templates = sorted(templates, key=key_fn)
+
+        title = "# Prompt Library"
+        stamp = f"_Generated: {datetime.now().isoformat(timespec='seconds')}_"
+        header = [title, "", stamp, ""]
+
+        if not templates:
+            return "\n".join(header + ["_No templates._"])
+
+        toc = ["## Contents", ""]
+        for t in templates:
+            anchor = t.name.lower().replace(" ", "-")
+            toc.append(f"- [{t.name}](#{anchor})")
+        toc.append("")
+
+        sections = [t.to_markdown() for t in templates]
+        return "\n".join(header + toc + sections)
 
     def find_duplicates(self) -> dict:
         """Find templates with identical content.
