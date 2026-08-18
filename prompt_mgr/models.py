@@ -57,6 +57,29 @@ class Template:
         """Check if template has all specified tags."""
         return all(tag in self.tags for tag in tags)
 
+    def validate(self) -> List[str]:
+        """Validate template for common issues.
+        
+        Returns:
+            List of warning strings. Empty list means no issues.
+        """
+        warnings = []
+        if not self.content.strip():
+            warnings.append("Template content is empty or whitespace-only.")
+        # Check for unclosed variable placeholders
+        opens = self.content.count("{{")
+        closes = self.content.count("}}")
+        if opens != closes:
+            warnings.append(f"Unbalanced variable syntax: {opens} '{{{{' but {closes} '}}}}'")
+        # Check for single-brace (likely typo)
+        for i, ch in enumerate(self.content):
+            if ch == '{' and (i + 1 >= len(self.content) or self.content[i + 1] != '{'):
+                if i == 0 or self.content[i - 1] != '{':
+                    # Lone { not part of {{
+                    warnings.append(f"Lone '{{' detected at position {i} — did you mean '{{{{'?" )
+                    break  # one warning is enough
+        return warnings
+
     def extract_variables(self) -> List[str]:
         """Extract variable names from template content."""
         import re
