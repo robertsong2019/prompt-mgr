@@ -204,6 +204,20 @@ def render(name: str, vars):
 
 
 @main.command()
+@click.option("--limit", "-n", default=10, help="Number of recent templates")
+def recent(limit: int):
+    """Show recently updated templates."""
+    manager = PromptManager()
+    templates = manager.recent_templates(n=limit)
+    
+    if not templates:
+        console.print("[yellow]No templates found.[/yellow]")
+        return
+    
+    console.print(format_template_table(templates))
+
+
+@main.command()
 @click.option("--output", "-o", type=click.Path(), default="templates.json", help="Output file")
 def export(output: str):
     """Export templates to JSON."""

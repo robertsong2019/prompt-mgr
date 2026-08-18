@@ -390,6 +390,17 @@ class PromptManager:
             self._save_templates()
         return template
 
+    def recent_templates(self, n: int = 10) -> list:
+        """Return the n most recently updated templates.
+        
+        Args:
+            n: Maximum number of templates to return.
+        
+        Returns:
+            List of Template objects sorted by updated_at descending.
+        """
+        return self.collection.recent(n)
+
     def import_templates(self, input_file: Path, overwrite: bool = False) -> int:
         """Import templates from a JSON file.
         

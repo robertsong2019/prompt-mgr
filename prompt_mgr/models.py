@@ -498,6 +498,21 @@ class TemplateCollection:
         sections = [t.to_markdown() for t in templates]
         return "\n".join(header + toc + sections)
 
+    def recent(self, n: int = 10) -> List[Template]:
+        """Return the n most recently updated templates.
+        
+        Args:
+            n: Maximum number of templates to return.
+        
+        Returns:
+            List of templates sorted by updated_at descending, capped at n.
+        """
+        return sorted(
+            self.templates.values(),
+            key=lambda t: t.updated_at,
+            reverse=True,
+        )[:n]
+
     def find_duplicates(self) -> dict:
         """Find templates with identical content.
         
