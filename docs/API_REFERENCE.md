@@ -217,6 +217,58 @@ count = mgr.import_templates(
 print(f"Imported {count} templates")
 ```
 
+##### `clone_template(source_name, new_name)`
+
+Copy a template under a new name. The clone's tag list is independent from the original.
+
+**Parameters:**
+- `source_name` (str): Template to copy
+- `new_name` (str): Name for the copy
+
+**Returns:**
+- `Template`: The newly created clone
+
+**Raises:**
+- `ValueError`: If source doesn't exist or `new_name` is already taken
+
+##### `rename_template(old_name, new_name)`
+
+Rename a template, preserving content, tags, and description.
+
+**Parameters:**
+- `old_name` (str): Current name
+- `new_name` (str): New name
+
+**Returns:**
+- `Template`: The renamed template
+
+##### `add_tag(name, tag)` / `remove_tag(name, tag)`
+
+Add or remove a single tag without rewriting the full template.
+
+**Returns:**
+- `Template`: The updated template
+
+##### `recent_templates(n=10)`
+
+Return the `n` most recently updated templates (newest first).
+
+**Returns:**
+- `List[Template]`
+
+##### `get_stats()`
+
+Aggregate statistics for the whole collection.
+
+**Returns:**
+- `dict`: Keys `total`, `tag_frequency`, `total_variables`, `avg_content_length`, `templates_with_variables`
+
+**Example:**
+```python
+stats = mgr.get_stats()
+print(f"{stats['total']} templates, {stats['total_variables']} variable slots")
+```
+
 ---
 
 ### Template
@@ -318,6 +370,55 @@ Extract variable names from template content.
 vars = template.extract_variables()
 # If content is "Hello {{name}}, welcome to {{place}}"
 # vars will be ["name", "place"]
+```
+
+##### `render(variables)`
+
+Render the template directly on the model (no manager needed). Substitution is literal-safe: backslashes in variable values are preserved as-is.
+
+**Parameters:**
+- `variables` (dict): Variable name → value
+
+**Returns:**
+- `str`: Rendered content
+
+##### `validate()`
+
+Check the template for common issues.
+
+**Returns:**
+- `List[str]`: Warning strings; empty list means no issues detected
+
+**Example:**
+```python
+for warning in template.validate():
+    print("⚠", warning)
+# e.g. "Unbalanced variable syntax: 2 '{{' but 1 '}}'"
+```
+
+##### `to_markdown()`
+
+Format the template as a markdown block (name, tags, content fence).
+
+**Returns:**
+- `str`
+
+##### `to_json()` / `from_json(json_str)` (classmethod)
+
+Single-template (de)serialization, independent of any collection.
+
+##### `diff(other)`
+
+Compare with another template field by field.
+
+**Returns:**
+- `dict`: Scalar fields as `{field: {"self": old, "other": new}}`; tags as `{"tags": {"added": [...], "removed": [...]}}`. Empty dict means identical.
+
+**Example:**
+```python
+changes = v1.diff(v2)
+if changes:
+    print("Changed fields:", list(changes))
 ```
 
 ---
@@ -431,6 +532,89 @@ Create collection from JSON string.
 
 **Returns:**
 - `TemplateCollection`: Created collection
+
+##### `tag_summary()`
+
+Tag usage counts, sorted by frequency descending.
+
+**Returns:**
+- `dict`: tag → count
+
+##### `sort_by(field="name", reverse=False)`
+
+Return templates sorted by `name`, `created_at`, `updated_at`, `content_length`, or `tag_count`.
+
+**Returns:**
+- `List[Template]`
+
+##### `merge(other)`
+
+Merge another collection into this one. Templates unique to `other` are added; name collisions are skipped (self wins).
+
+**Returns:**
+- `dict`: `{"added": [...], "skipped": [...]}`
+
+##### `filter(predicate)`
+
+Filter by an arbitrary predicate function.
+
+**Returns:**
+- `List[Template]`
+
+##### `group_by_tag()`
+
+Group templates by tag; templates without tags are grouped under their own key.
+
+**Returns:**
+- `dict`: tag → `List[Template]`
+
+##### `search_by_variables(variables, match="any")`
+
+Find templates that require the given variables. `match="any"` needs at least one; `match="all"` needs every one.
+
+**Returns:**
+- `List[Template]`
+
+**Example:**
+```python
+# Templates renderable with just {"code", "focus"}
+candidates = collection.search_by_variables(["code", "focus"], match="all")
+```
+
+##### `content_stats()`
+
+Aggregate content metrics across the collection.
+
+**Returns:**
+- `dict`: Keys `total_chars`, `total_tokens`, `avg_chars`, `avg_tokens`, `longest`, `shortest`, `total_variables`
+
+##### `find_similar(name, top_k=5)`
+
+Token Jaccard similarity search against the named template (target excluded).
+
+**Returns:**
+- `List[tuple]`: `(template_name, score)` pairs, score descending, scores rounded to 4 decimals
+
+**Raises:**
+- `ValueError`: If the named template doesn't exist
+
+##### `export_markdown(tags=None, sort_by="name")`
+
+Export the collection (optionally tag-filtered) as a single markdown document with a table of contents.
+
+**Returns:**
+- `str`
+
+##### `recent(n=10)`
+
+The `n` most recently updated templates, newest first.
+
+##### `find_duplicates()`
+
+Detect templates with identical content.
+
+**Returns:**
+- `dict`: SHA-256 content hash → sorted list of template names sharing that content. Only groups of 2+ are included.
 
 ---
 

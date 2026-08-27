@@ -4,12 +4,14 @@ A lightweight CLI tool for managing AI prompt templates with variable substituti
 
 ## Features
 
-- ✨ **Template Management**: Add, view, edit, and delete prompt templates
-- 🏷️ **Categorization**: Organize templates with tags
-- 🔍 **Search**: Find templates by name, content, or tags
-- 📝 **Variable Substitution**: Use `{{variable}}` syntax for dynamic prompts
+- ✨ **Template Management**: Add, view, edit, rename, clone, and delete prompt templates
+- 🏷️ **Categorization**: Organize templates with tags (add/remove tags individually)
+- 🔍 **Search**: Find templates by name, content, tags, or required variables
+- 📝 **Variable Substitution**: Use `{{variable}}` syntax for dynamic prompts (literal-backslash safe)
 - 🎨 **Rendering**: Render final prompts with variable values
-- 📦 **Import/Export**: Share templates between systems
+- 🧰 **Template Tools**: `diff()`, `validate()`, `to_markdown()`, similarity search, duplicate detection
+- 📊 **Statistics**: Collection stats, content metrics, and tag summaries
+- 📦 **Import/Export**: Share templates between systems (JSON and single-doc Markdown)
 
 ## Installation
 
@@ -93,6 +95,23 @@ prompt-mgr search "review" --tags "coding"
 Options:
 - `--tags`: Filter by tags
 
+### `prompt-mgr show <name>`
+Show full template details (content, tags, variables, timestamps).
+
+```bash
+prompt-mgr show my-template
+```
+
+### `prompt-mgr recent`
+Show recently updated templates.
+
+```bash
+prompt-mgr recent --limit 5
+```
+
+Options:
+- `--limit`: Number of templates to show (default: 10)
+
 ### `prompt-mgr render <name>`
 Render a template with variables.
 
@@ -165,6 +184,54 @@ prompt-mgr add summarize \
   --tags "summarization"
 ```
 
+## Python API Highlights
+
+Everything the CLI does is available programmatically via `PromptManager`, plus a set of collection/model utilities. Full details in the [API Reference](docs/API_REFERENCE.md).
+
+### Manager operations
+
+```python
+from prompt_mgr import PromptManager
+
+mgr = PromptManager()
+
+mgr.clone_template("code-review", "code-review-v2")   # copy with independent tags
+mgr.rename_template("old-name", "new-name")            # rename, preserving data
+mgr.add_tag("code-review", "urgent")                   # tag management without full update
+mgr.remove_tag("code-review", "urgent")
+mgr.recent_templates(n=5)                               # most recently updated
+mgr.get_stats()                                         # total, tag_frequency, avg_content_length, ...
+```
+
+### Template model
+
+```python
+t = mgr.get_template("code-review")
+
+t.render({"code": "...", "focus": "security"})  # render directly on the model
+t.validate()                                     # warn on empty content / unbalanced {{ }}
+t.to_markdown()                                  # formatted markdown block
+t.to_json() / Template.from_json(s)              # single-template (de)serialization
+t.diff(other)                                    # field-level changes + tag added/removed
+```
+
+### Collection utilities
+
+```python
+from prompt_mgr import PromptManager
+
+collection = PromptManager()._load_templates()  # or build a TemplateCollection directly
+
+collection.find_duplicates()                     # templates with identical content
+collection.find_similar("code-review", top_k=3)  # token Jaccard similarity
+templates = collection.search_by_variables(["code"], match="any")   # by required vars
+collection.content_stats()                       # chars/tokens/vars, longest/shortest
+collection.sort_by("updated_at", reverse=True)   # name/created_at/updated_at/content_length/tag_count
+collection.group_by_tag()                        # tag -> templates (untagged grouped separately)
+collection.merge(other)                          # {"added": [...], "skipped": [...]}
+collection.export_markdown(tags=["coding"])      # single-doc export with TOC
+```
+
 ## Data Storage
 
 Templates are stored in `~/.prompt-mgr/templates.json` by default.
@@ -205,11 +272,11 @@ prompt-mgr/
 │   ├── __init__.py
 │   ├── cli.py          # CLI commands
 │   ├── manager.py      # Core logic
-│   ├── models.py       # Data models
+│   ├── models.py       # Data models (Template, TemplateCollection)
 │   └── utils.py        # Utilities
+├── docs/               # API reference, tutorial, architecture guide
 ├── tests/
-│   ├── test_manager.py
-│   └── test_cli.py
+├── features.md         # Feature backlog & changelog notes
 ├── README.md
 ├── setup.py
 └── requirements.txt
