@@ -108,6 +108,23 @@ def test_substitute_variables_special_regex_chars():
     assert result == "Hello Admin"
 
 
+def test_substitute_variables_backslash_value():
+    """substitute_variables keeps backslashes in values literal (regression).
+
+    Values are used as literal replacements, not re.sub replacement
+    templates: ``C:\\Users\\test`` must not raise ``re.error: bad escape``
+    and must not be mangled.
+    """
+    result = substitute_variables("path={{p}}", {"p": r"C:\Users\test"})
+    assert result == r"path=C:\Users\test"
+
+
+def test_substitute_variables_group_reference_value():
+    """substitute_variables must not interpret \\1 as a group reference."""
+    result = substitute_variables("Hello {{name}}", {"name": r"\1"})
+    assert result == "Hello \\1"
+
+
 # --- parse_variable_assignments ---
 
 def test_parse_variable_assignments_single():

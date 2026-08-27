@@ -173,6 +173,17 @@ def test_render_not_found(runner):
     assert "Error" in result.output
 
 
+def test_render_backslash_value(runner):
+    r"""render keeps Windows-style paths in --vars literal (regression).
+
+    Used to crash with re.error: bad escape \U before the fix.
+    """
+    runner.invoke(main, ["add", "winpath", "-c", "path={{p}}"])
+    result = runner.invoke(main, ["render", "winpath", "--vars", r"p=C:\Users\test"])
+    assert result.exit_code == 0
+    assert "C:\\Users\\test" in result.output
+
+
 def test_render_missing_variable(runner):
     """render without required variables raises error."""
     runner.invoke(main, ["add", "need-var", "-c", "Hello {{name}}"])

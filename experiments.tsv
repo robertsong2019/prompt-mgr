@@ -7,3 +7,8 @@ timestamp	commit	metric	value	status	description
 2026-08-10T19:15+08:00	1b56a57	test_count	248→259/+11	keep	F13 search_by_variables(): find templates using specific variables (any/all modes, 11 tests: any/all/single/no-match/empty/invalid/case-sensitive/dupes/many/same-var-twice/manager). Zero regressions.
 2026-08-10T19:25+08:00	5415a69	test_count	259→267/+8	keep	F14 content_stats(): aggregate content metrics — total/avg chars, tokens, variables, longest/shortest (8 tests: empty/single/multiple/vars/long-short/empty-content/manager/keys). Zero regressions.
 2026-08-17T03:25+08:00	b21d0ee	267	283	+16	fix render backslash + F15 export_markdown	283/283	keep
+timestamp	commit	metric	value	status	description
+2026-08-18T19:00+08:00	a33c769	test_count	283→308/+25	keep	CLI error-path tests: list/search empty, show/edit/delete not-found, render missing vars, import invalid JSON. Coverage 95%→99%.
+2026-08-18T19:10+08:00	c73185f	test_count	308→317/+9	keep	TemplateCollection.recent(n) + CLI recent command.
+2026-08-18T19:15+08:00	f478662	test_count	317→324/+7	keep	Template.validate(): empty content, unbalanced braces, lone brace detection.
+2026-08-28T03:32+08:00	f478662	test_count	324→327/+3	keep	Bug: utils.substitute_variables() passed values as re.sub replacement strings — backslash values crashed render (re.error bad-escape/invalid-group). Windows-path values in --vars broke CLI render. Fixed with lambda replacement (literal semantics). KEY MISS: b21d0ee (08-17) fixed the SAME bug in models.Template.render() but missed this duplicate implementation — CLI render path (manager→utils) stayed broken. Family: duplicate-code hereditary bugs. 3 red-verified regression tests (2 unit + 1 CLI). 327/327.

@@ -38,7 +38,10 @@ def substitute_variables(template_content: str, variables: Dict[str, str]) -> st
     result = template_content
     for key, value in variables.items():
         pattern = r'\{\{' + re.escape(key) + r'\}\}'
-        result = re.sub(pattern, value, result)
+        # Use a function replacement so `value` is treated literally;
+        # a string replacement would interpret backslashes (e.g. C:\Users
+        # or \1) as escape/group references and crash with re.error.
+        result = re.sub(pattern, lambda m, v=value: v, result)
     return result
 
 
