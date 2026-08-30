@@ -219,27 +219,35 @@ def recent(limit: int):
 
 @main.command()
 @click.option("--output", "-o", type=click.Path(), default="templates.json", help="Output file")
-def export(output: str):
-    """Export templates to JSON."""
+@click.option("--format", "-f", type=click.Choice(["json", "markdown"]), default="json", help="Export format")
+def export(output: str, format: str):
+    """Export templates to JSON or Markdown."""
     manager = PromptManager()
     output_path = Path(output)
-    
-    manager.export_templates(output_path)
+
+    if format == "markdown":
+        manager.export_markdown_file(output_path)
+    else:
+        manager.export_templates(output_path)
     console.print(f"[green]✓[/green] Templates exported to: {output_path}")
 
 
 @main.command()
 @click.option("--input", "-i", type=click.Path(exists=True), required=True, help="Input file")
 @click.option("--overwrite", "-o", is_flag=True, help="Overwrite existing templates")
-def import_cmd(input: str, overwrite: bool):
-    """Import templates from JSON."""
+@click.option("--format", "-f", type=click.Choice(["json", "markdown"]), default="json", help="Input format")
+def import_cmd(input: str, overwrite: bool, format: str):
+    """Import templates from JSON or Markdown."""
     try:
         manager = PromptManager()
         input_path = Path(input)
-        
-        count = manager.import_templates(input_path, overwrite=overwrite)
+
+        if format == "markdown":
+            count = manager.import_markdown_file(input_path, overwrite=overwrite)
+        else:
+            count = manager.import_templates(input_path, overwrite=overwrite)
         console.print(f"[green]✓[/green] Imported {count} templates")
-        
+
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise click.Abort()

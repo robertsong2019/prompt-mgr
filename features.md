@@ -38,6 +38,7 @@
 - [x] **F13**: `TemplateCollection.search_by_variables(vars, match)` — find templates by required variables (any/all) ✅ 2026-08-10
 - [x] **F14**: `TemplateCollection.content_stats()` — aggregate content metrics (chars/tokens/vars/longest/shortest) ✅ 2026-08-10
 - [x] **F15**: `TemplateCollection.export_markdown(tags, sort_by)` — single-doc export with TOC + tag filter + sorting ✅ 2026-08-17
+- [x] **F16**: `Template.from_markdown()` + `TemplateCollection.import_markdown()` + `PromptManager.export_markdown_file/import_markdown_file` + CLI `export/import --format markdown` — full markdown round-trip ✅ 2026-08-30
 - [x] **Bugfix**: `Template.render()` backslash corruption — literal lambda substitution ✅ 2026-08-17
 
 ## Priorities
