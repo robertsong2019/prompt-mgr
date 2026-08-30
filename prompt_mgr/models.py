@@ -144,6 +144,86 @@ class Template:
         lines.append("```")
         return "\n".join(lines)
 
+    @classmethod
+    def from_markdown(cls, text: str) -> "Template":
+        """Create a template from a to_markdown()-format block — F16.
+
+        Parses the block format emitted by ``to_markdown()``: an H2 name,
+        optional italic description, optional bold Tags / Variables lines,
+        Created/Updated timestamp lines, and a fenced code block holding
+        the content. The Variables line is informational only — variables
+        are re-derived from the content.
+
+        Args:
+            text: Markdown block (extra surrounding blank lines tolerated).
+
+        Returns:
+            Parsed Template.
+
+        Raises:
+            ValueError: If no ``## Name`` header is found or the code
+                fence is never closed.
+        """
+        name = None
+        description = None
+        tags: List[str] = []
+        created_at = None
+        updated_at = None
+        content_lines: List[str] = []
+        fence_open = False
+
+        for raw in text.strip("\n").splitlines():
+            stripped = raw.strip()
+            if fence_open:
+                if stripped == "```":
+                    fence_open = False
+                else:
+                    content_lines.append(raw)
+                continue
+            if stripped.startswith("```"):
+                fence_open = True
+            elif stripped.startswith("## ") and name is None:
+                name = stripped[3:].strip()
+            elif (
+                description is None
+                and len(stripped) > 1
+                and stripped.startswith("*")
+                and stripped.endswith("*")
+                and not stripped.startswith("**")
+            ):
+                description = stripped[1:-1].strip()
+            elif stripped.startswith("**Tags:**"):
+                tags = [
+                    t.strip()
+                    for t in stripped[len("**Tags:**"):].split(",")
+                    if t.strip()
+                ]
+            elif stripped.startswith("**Created:**"):
+                created_at = stripped[len("**Created:**"):].strip()
+            elif stripped.startswith("**Updated:**"):
+                updated_at = stripped[len("**Updated:**"):].strip()
+            # "**Variables:**" lines intentionally ignored (derived from content)
+
+        if name is None:
+            raise ValueError(
+                "No '## Name' header found — not a template markdown block"
+            )
+        if fence_open:
+            raise ValueError(f"Unterminated code fence in template '{name}'")
+
+        kwargs = {}
+        if created_at:
+            kwargs["created_at"] = created_at
+        if updated_at:
+            kwargs["updated_at"] = updated_at
+        return cls(
+            name=name,
+            content="\n".join(content_lines),
+            tags=tags,
+            description=description,
+            **kwargs,
+        )
+
     def to_json(self) -> str:
         """Serialize this template to a JSON string.
 
@@ -520,6 +600,48 @@ class TemplateCollection:
 
         sections = [t.to_markdown() for t in templates]
         return "\n".join(header + toc + sections)
+
+    def import_markdown(self, text: str) -> List[Template]:
+        """Parse an exported markdown document back into templates — F16.
+
+        Splits the document at H2 headers (skipping the ``Contents``
+        section emitted by ``export_markdown()``; H2 lines inside code
+        fences are treated as content, not boundaries) and parses each
+        block with :meth:`Template.from_markdown`.
+
+        The collection itself is not mutated — templates are returned so
+        callers can inspect names and resolve conflicts before adding.
+
+        Args:
+            text: Markdown document (as produced by ``export_markdown()``,
+                or any text with zero or more template blocks).
+
+        Returns:
+            Templates in document order. Documents without template
+            blocks return an empty list.
+        """
+        blocks: List[List[str]] = []
+        current: Optional[List[str]] = None  # None = between/skipped sections
+        fence_open = False
+
+        for raw in text.splitlines():
+            stripped = raw.strip()
+            if not fence_open and stripped.startswith("## "):
+                if current is not None:
+                    blocks.append(current)
+                fence_open = False
+                current = None if stripped == "## Contents" else [raw]
+                continue
+            if current is not None:
+                if not fence_open and stripped.startswith("```"):
+                    fence_open = True
+                elif fence_open and stripped == "```":
+                    fence_open = False
+                current.append(raw)
+        if current is not None:
+            blocks.append(current)
+
+        return [Template.from_markdown("\n".join(block)) for block in blocks]
 
     def recent(self, n: int = 10) -> List[Template]:
         """Return the n most recently updated templates.
