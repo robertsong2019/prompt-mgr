@@ -401,6 +401,36 @@ class PromptManager:
         """
         return self.collection.recent(n)
 
+    def _merge_templates(self, templates, overwrite: bool) -> int:
+        """Merge templates into the collection and persist.
+
+        Shared merge loop for import_templates() / import_markdown_file():
+        existing names are skipped unless overwrite=True.
+
+        Args:
+            templates: Iterable of Template objects to merge in.
+            overwrite: Whether to overwrite existing templates.
+
+        Returns:
+            Number of templates actually imported.
+        """
+        imported_count = 0
+
+        for template in templates:
+            existing = self.collection.get(template.name)
+
+            if existing and not overwrite:
+                continue
+
+            if existing:
+                self.collection.delete(template.name)
+
+            self.collection.add(template)
+            imported_count += 1
+
+        self._save_templates()
+        return imported_count
+
     def import_templates(self, input_file: Path, overwrite: bool = False) -> int:
         """Import templates from a JSON file.
 
@@ -415,25 +445,10 @@ class PromptManager:
             data = json.load(f)
 
         imported_collection = TemplateCollection.from_dict(data)
-        imported_count = 0
-
-        for template in imported_collection.list_all():
-            existing = self.collection.get(template.name)
-
-            if existing and not overwrite:
-                continue
-
-            if existing:
-                self.collection.delete(template.name)
-
-            self.collection.add(template)
-            imported_count += 1
-
-        self._save_templates()
-        return imported_count
+        return self._merge_templates(imported_collection.list_all(), overwrite)
 
     def export_markdown_file(self, output_file: Path) -> None:
-        """Export the collection as a single markdown document — F16.
+        """Export the collection as a single markdown document - F16.
 
         Args:
             output_file: Destination path (written UTF-8).
@@ -441,7 +456,7 @@ class PromptManager:
         output_file.write_text(self.collection.export_markdown(), encoding="utf-8")
 
     def import_markdown_file(self, input_file: Path, overwrite: bool = False) -> int:
-        """Import templates from a markdown document — F16.
+        """Import templates from a markdown document - F16.
 
         Mirrors :meth:`import_templates`: templates whose names already
         exist are skipped unless ``overwrite`` is True.
@@ -455,19 +470,4 @@ class PromptManager:
             Number of templates imported.
         """
         text = input_file.read_text(encoding="utf-8")
-        imported_count = 0
-
-        for template in self.collection.import_markdown(text):
-            existing = self.collection.get(template.name)
-
-            if existing and not overwrite:
-                continue
-
-            if existing:
-                self.collection.delete(template.name)
-
-            self.collection.add(template)
-            imported_count += 1
-
-        self._save_templates()
-        return imported_count
+        return self._merge_templates(self.collection.import_markdown(text), overwrite)
