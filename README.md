@@ -9,7 +9,7 @@ A lightweight CLI tool for managing AI prompt templates with variable substituti
 - 🔍 **Search**: Find templates by name, content, tags, or required variables
 - 📝 **Variable Substitution**: Use `{{variable}}` syntax for dynamic prompts (literal-backslash safe)
 - 🎨 **Rendering**: Render final prompts with variable values
-- 🧰 **Template Tools**: `diff()`, `validate()`, `to_markdown()`, similarity search, duplicate detection
+- 🧰 **Template Tools**: `diff()`, `validate()`, `to_markdown()`, `from_markdown()`, similarity search, duplicate detection
 - 📊 **Statistics**: Collection stats, content metrics, and tag summaries
 - 📦 **Import/Export**: Share templates between systems (JSON and single-doc Markdown)
 
@@ -211,6 +211,7 @@ t = mgr.get_template("code-review")
 t.render({"code": "...", "focus": "security"})  # render directly on the model
 t.validate()                                     # warn on empty content / unbalanced {{ }}
 t.to_markdown()                                  # formatted markdown block
+Template.from_markdown(md_block)                 # parse a to_markdown() block back — F16
 t.to_json() / Template.from_json(s)              # single-template (de)serialization
 t.diff(other)                                    # field-level changes + tag added/removed
 ```
@@ -230,6 +231,7 @@ collection.sort_by("updated_at", reverse=True)   # name/created_at/updated_at/co
 collection.group_by_tag()                        # tag -> templates (untagged grouped separately)
 collection.merge(other)                          # {"added": [...], "skipped": [...]}
 collection.export_markdown(tags=["coding"])      # single-doc export with TOC
+collection.import_markdown(md_doc)               # parse exported markdown back into templates — F16
 ```
 
 ## Data Storage

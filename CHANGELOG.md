@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **F16 markdown round-trip** (Aug 30, 2026): `Template.from_markdown()` / `TemplateCollection.import_markdown()` / `PromptManager.export_markdown_file()` / `import_markdown_file()`; CLI `export` / `import` gain `--format markdown`
 - **F1-F15 feature series** (Aug 2026): `Template.render()` / `to_markdown()` / `diff()` / `validate()` / `to_json()` / `from_json()`, `TemplateCollection.find_duplicates()` / `sort_by()` / `merge()` / `filter()` / `group_by_tag()` / `find_similar()` (token Jaccard) / `search_by_variables()` (any/all) / `content_stats()` / `export_markdown()` (TOC + tag filter)
 - Manager: `clone_template()`, `rename_template()`, `add_tag()` / `remove_tag()`, `recent_templates()`, `get_stats()`
 - CLI: `show` and `recent` commands
-- Test suite 52 → 327 tests (99% coverage)
+- Test suite 52 → 350 tests (99% coverage)
 - Comprehensive documentation suite
   - API Reference (docs/API_REFERENCE.md)
   - Tutorial (docs/TUTORIAL.md)
