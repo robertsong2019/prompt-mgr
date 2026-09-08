@@ -177,7 +177,9 @@ def delete(name: str, yes: bool):
 @main.command()
 @click.argument("name")
 @click.option("--vars", "-v", help="Variable assignments as comma-separated list (key=value,key2=value2)")
-def render(name: str, vars):
+@click.option("--output", "-o", type=click.Path(), default=None,
+              help="Write rendered result to file instead of stdout")
+def render(name: str, vars, output: Optional[str]):
     """Render a template with variables."""
     try:
         manager = PromptManager()
@@ -189,6 +191,11 @@ def render(name: str, vars):
             variables = parse_variable_assignments(var_list)
         else:
             variables = {}
+        
+        if output:
+            out_path = manager.render_to_file(name, variables, Path(output))
+            console.print(f"[green]Rendered to {out_path}[/green]")
+            return
         
         # Render template
         result = manager.render_template(name, variables)

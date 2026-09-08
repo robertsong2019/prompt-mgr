@@ -214,6 +214,32 @@ class PromptManager:
 
         return substitute_variables(template.content, variables)
 
+    def render_to_file(
+        self,
+        name: str,
+        variables: Dict[str, str],
+        output_file: Path,
+    ) -> Path:
+        """Render a template and write the result to a file.
+
+        Args:
+            name: Template name
+            variables: Variable values
+            output_file: Destination path (parent dirs created as needed)
+
+        Returns:
+            The output path
+
+        Raises:
+            ValueError: If template not found or variables missing
+                (in which case no file is written)
+        """
+        result = self.render_template(name, variables)
+        output = Path(output_file)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(result, encoding="utf-8")
+        return output
+
     def export_templates(self, output_file: Path) -> None:
         """Export templates to a JSON file.
 
