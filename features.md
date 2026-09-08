@@ -39,6 +39,9 @@
 - [x] **F14**: `TemplateCollection.content_stats()` — aggregate content metrics (chars/tokens/vars/longest/shortest) ✅ 2026-08-10
 - [x] **F15**: `TemplateCollection.export_markdown(tags, sort_by)` — single-doc export with TOC + tag filter + sorting ✅ 2026-08-17
 - [x] **F16**: `Template.from_markdown()` + `TemplateCollection.import_markdown()` + `PromptManager.export_markdown_file/import_markdown_file` + CLI `export/import --format markdown` — full markdown round-trip ✅ 2026-08-30
+- [x] **F17**: `TemplateCollection.diff(other)` — added/removed names + field-level changes for shared templates ✅ 2026-09-08
+- [x] **F18**: `PromptManager.render_to_file(name, vars, output)` + CLI `render --output` — render directly to a file ✅ 2026-09-08
+- [x] **F19**: `TemplateCollection.search(query, regex=True)` + `PromptManager.search_templates(regex)` + CLI `search --regex` — regex search ✅ 2026-09-08
 - [x] **Bugfix**: `Template.render()` backslash corruption — literal lambda substitution ✅ 2026-08-17
 
 ## Priorities

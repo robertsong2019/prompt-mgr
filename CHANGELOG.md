@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **F19 regex search** (Sep 8, 2026): `TemplateCollection.search()` / `PromptManager.search_templates()` gain `regex=True`; CLI `search --regex` — case-sensitive pattern matching over name/content/description, invalid patterns rejected
+- **F18 render to file** (Sep 8, 2026): `PromptManager.render_to_file()` + CLI `render --output/-o` — write rendered result to a file (parents auto-created; failures leave no file behind)
+- **F17 collection diff** (Sep 8, 2026): `TemplateCollection.diff(other)` — added/removed names + per-template field-level changes, building on `Template.diff()`
 - **F16 markdown round-trip** (Aug 30, 2026): `Template.from_markdown()` / `TemplateCollection.import_markdown()` / `PromptManager.export_markdown_file()` / `import_markdown_file()`; CLI `export` / `import` gain `--format markdown`
 - **F1-F15 feature series** (Aug 2026): `Template.render()` / `to_markdown()` / `diff()` / `validate()` / `to_json()` / `from_json()`, `TemplateCollection.find_duplicates()` / `sort_by()` / `merge()` / `filter()` / `group_by_tag()` / `find_similar()` (token Jaccard) / `search_by_variables()` (any/all) / `content_stats()` / `export_markdown()` (TOC + tag filter)
 - Manager: `clone_template()`, `rename_template()`, `add_tag()` / `remove_tag()`, `recent_templates()`, `get_stats()`
 - CLI: `show` and `recent` commands
-- Test suite 52 → 350 tests (99% coverage)
+- Test suite 52 → 381 tests (99% coverage)
 - Comprehensive documentation suite
   - API Reference (docs/API_REFERENCE.md)
   - Tutorial (docs/TUTORIAL.md)
@@ -94,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### v1.1.0 (Planned)
 - [ ] Template versioning
 - [ ] Template categories/hierarchy
-- [ ] Enhanced search with regex support
+- [x] Enhanced search with regex support (F19, Sep 2026)
 
 ### v1.2.0 (Planned)
 - [ ] Template composition

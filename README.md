@@ -121,6 +121,11 @@ prompt-mgr render code-review --var code="def foo(): pass" --var focus="security
 
 Options:
 - `--var`: Variable assignments (key=value)
+- `--output/-o`: Write rendered result to a file instead of stdout
+
+```bash
+prompt-mgr render code-review --var code="..." --output out.txt
+```
 
 ### `prompt-mgr edit <name>`
 Edit a template.

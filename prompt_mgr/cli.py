@@ -72,12 +72,18 @@ def list(tags: Optional[str], format: str):
 @main.command()
 @click.argument("query", required=False)
 @click.option("--tags", "-t", help="Filter by tags (comma-separated)")
-def search(query: Optional[str], tags: Optional[str]):
+@click.option("--regex", "-r", is_flag=True, default=False,
+              help="Treat query as a regular expression")
+def search(query: Optional[str], tags: Optional[str], regex: bool):
     """Search templates."""
     manager = PromptManager()
     tag_list = [t.strip() for t in tags.split(",")] if tags else None
     
-    templates = manager.search_templates(query=query or "", tags=tag_list)
+    try:
+        templates = manager.search_templates(query=query or "", tags=tag_list, regex=regex)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise click.Abort()
     
     if not templates:
         console.print("[yellow]No templates found.[/yellow]")

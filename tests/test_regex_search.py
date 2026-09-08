@@ -72,3 +72,44 @@ def test_regex_empty_query_returns_all(col):
     """Empty regex query matches everything (matches search() contract)."""
     results = col.search("", regex=True)
     assert len(results) == 3
+
+
+# --- CLI wiring (C4) ---
+
+import os as _os
+import uuid as _uuid
+from click.testing import CliRunner as _CliRunner
+from prompt_mgr.cli import main as _main
+
+
+@pytest.fixture
+def cli(tmp_path):
+    _os.environ["PROMPT_MGR_DATA_DIR"] = str(tmp_path / "data")
+    runner = _CliRunner()
+    for name, content in [("greet-user", "Hello {{name}}!"), ("code-review", "patch text")]:
+        r = runner.invoke(_main, ["add", name, "--content", content])
+        assert r.exit_code == 0
+    yield runner
+    del _os.environ["PROMPT_MGR_DATA_DIR"]
+
+
+def test_cli_search_regex_flag(cli):
+    """--regex interprets query as pattern."""
+    result = cli.invoke(_main, ["search", "^greet-", "--regex"])
+    assert result.exit_code == 0
+    assert "greet-user" in result.output
+    assert "code-review" not in result.output
+
+
+def test_cli_search_regex_literal_mode_unchanged(cli):
+    """Without --regex, pattern chars are literal substrings."""
+    result = cli.invoke(_main, ["search", "^greet-"])
+    assert result.exit_code == 0
+    assert "No templates found" in result.output
+
+
+def test_cli_search_regex_invalid(cli):
+    """Invalid pattern → error message, non-zero exit."""
+    result = cli.invoke(_main, ["search", "([unclosed", "--regex"])
+    assert result.exit_code != 0
+    assert "Invalid regex" in result.output

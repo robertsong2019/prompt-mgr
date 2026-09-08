@@ -169,17 +169,19 @@ class PromptManager:
         self,
         query: str,
         tags: Optional[List[str]] = None,
+        regex: bool = False,
     ) -> List[Template]:
         """Search templates by query and/or tags.
 
         Args:
-            query: Search query
+            query: Search query (substring, or regex when regex=True)
             tags: Filter by tags (optional)
+            regex: Treat query as a case-sensitive regular expression
 
         Returns:
             List of matching templates
         """
-        return self.collection.search(query=query, tags=tags)
+        return self.collection.search(query=query, tags=tags, regex=regex)
 
     def render_template(
         self,
