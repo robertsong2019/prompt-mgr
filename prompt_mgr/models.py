@@ -322,6 +322,28 @@ class TemplateCollection:
         
         return results
 
+    def diff(self, other: "TemplateCollection") -> dict:
+        """Compare this collection with another.
+
+        Args:
+            other: The collection to compare against.
+
+        Returns:
+            Dictionary with three keys:
+            - ``added``: sorted names present only in ``other``
+            - ``removed``: sorted names present only in ``self``
+            - ``changed``: mapping of shared names to their non-empty
+              :meth:`Template.diff` results (content/description/tags)
+        """
+        added = sorted(set(other.templates) - set(self.templates))
+        removed = sorted(set(self.templates) - set(other.templates))
+        changed = {}
+        for name in sorted(set(self.templates) & set(other.templates)):
+            field_diff = self.templates[name].diff(other.templates[name])
+            if field_diff:
+                changed[name] = field_diff
+        return {"added": added, "removed": removed, "changed": changed}
+
     def to_dict(self) -> dict:
         """Convert collection to dictionary."""
         return {
