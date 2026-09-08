@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
 import json
+import re
 
 
 @dataclass
@@ -308,12 +309,35 @@ class TemplateCollection:
         """List all templates."""
         return list(self.templates.values())
 
-    def search(self, query: str = "", tags: Optional[List[str]] = None) -> List[Template]:
-        """Search templates by query and/or tags."""
+    def search(self, query: str = "", tags: Optional[List[str]] = None,
+               regex: bool = False) -> List[Template]:
+        """Search templates by query and/or tags.
+
+        Args:
+            query: Substring (default) or regular expression (regex=True).
+            tags: If given, only templates having ALL of these tags.
+            regex: Treat query as a Python regular expression matched
+                (case-sensitively) against name, content and description.
+                Invalid patterns raise ValueError.
+        """
+        pattern = None
+        if regex and query:
+            try:
+                pattern = re.compile(query)
+            except re.error as e:
+                raise ValueError(f"Invalid regex {query!r}: {e}") from e
+
         results = []
         for template in self.templates.values():
             # Check query match
-            matches_query = not query or template.matches_query(query)
+            if pattern is not None:
+                matches_query = (
+                    bool(pattern.search(template.name))
+                    or bool(pattern.search(template.content))
+                    or bool(pattern.search(template.description) if template.description else False)
+                )
+            else:
+                matches_query = not query or template.matches_query(query)
             # Check tags match
             matches_tags = not tags or template.has_tags(tags)
             
