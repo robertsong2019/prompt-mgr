@@ -409,6 +409,30 @@ class TemplateCollection:
         # Sort by count desc, then name asc
         return dict(sorted(freq.items(), key=lambda x: (-x[1], x[0])))
 
+    def variables_inventory(self) -> dict:
+        """Map each template variable to the templates that use it.
+
+        Variable-level aggregation, complementing ``tag_summary`` (tag-level)
+        and ``content_stats`` (character/token-level). Use it to assess the
+        blast radius of renaming a variable before touching templates.
+
+        Returns:
+            Dictionary mapping variable name to ``{"count": n_templates,
+            "templates": sorted list of template names}``. A variable used
+            multiple times in one template counts once. Outer dict sorted
+            by count descending, then variable name ascending.
+        """
+        usage = {}
+        for template in self.templates.values():
+            for var in template.extract_variables():
+                usage.setdefault(var, []).append(template.name)
+        return {
+            var: {"count": len(names), "templates": sorted(names)}
+            for var, names in sorted(
+                usage.items(), key=lambda x: (-len(x[1]), x[0])
+            )
+        }
+
     def sort_by(self, field: str = "name", reverse: bool = False) -> List[Template]:
         """Return templates sorted by a given field.
 

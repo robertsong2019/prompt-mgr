@@ -429,6 +429,74 @@ class PromptManager:
         """
         return self.collection.recent(n)
 
+    def variables_inventory(self) -> dict:
+        """Return the variable-level usage inventory of the store.
+
+        Returns:
+            Same structure as ``TemplateCollection.variables_inventory()``:
+            variable name -> {"count": n_templates, "templates": sorted names},
+            sorted by count desc then variable name asc.
+        """
+        return self.collection.variables_inventory()
+
+    def bulk_add_tags(self, names: list, tags: list) -> dict:
+        """Add tags to multiple templates in one batch.
+
+        Unlike ``add_tag``, unknown template names do not raise; they are
+        reported in the result so one bad name cannot abort a batch.
+
+        Args:
+            names: Template names to modify.
+            tags: Tags to add to each.
+
+        Returns:
+            {"updated": [names that gained at least one tag],
+             "missing": [names not found]}
+        """
+        updated, missing = [], []
+        for name in names:
+            template = self.collection.get(name)
+            if not template:
+                missing.append(name)
+                continue
+            added = [t for t in tags if t not in template.tags]
+            if added:
+                template.tags.extend(added)
+                template.update_timestamp()
+                updated.append(name)
+        if updated:
+            self._save_templates()
+        return {"updated": updated, "missing": missing}
+
+    def bulk_remove_tags(self, names: list, tags: list) -> dict:
+        """Remove tags from multiple templates in one batch.
+
+        Unknown template names do not raise; they are reported in
+        ``missing``.
+
+        Args:
+            names: Template names to modify.
+            tags: Tags to remove from each.
+
+        Returns:
+            {"updated": [names that lost at least one tag],
+             "missing": [names not found]}
+        """
+        updated, missing = [], []
+        for name in names:
+            template = self.collection.get(name)
+            if not template:
+                missing.append(name)
+                continue
+            before = len(template.tags)
+            template.tags = [t for t in template.tags if t not in tags]
+            if len(template.tags) != before:
+                template.update_timestamp()
+                updated.append(name)
+        if updated:
+            self._save_templates()
+        return {"updated": updated, "missing": missing}
+
     def _merge_templates(self, templates, overwrite: bool) -> int:
         """Merge templates into the collection and persist.
 

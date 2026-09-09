@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **F20 variables inventory** (Sep 9, 2026): `TemplateCollection.variables_inventory()` / `PromptManager.variables_inventory()` + CLI `variables` — variable-level usage aggregation (variable → count + sorted template names, count desc / name asc); check the blast radius before renaming a variable
+- **F21 bulk tag operations** (Sep 9, 2026): `PromptManager.bulk_add_tags()` / `bulk_remove_tags()` — batch tag changes across templates; unknown names reported in `missing` instead of raising, single save at end, no-op edits skip `updated_at` bump
 - **F19 regex search** (Sep 8, 2026): `TemplateCollection.search()` / `PromptManager.search_templates()` gain `regex=True`; CLI `search --regex` — case-sensitive pattern matching over name/content/description, invalid patterns rejected
 - **F18 render to file** (Sep 8, 2026): `PromptManager.render_to_file()` + CLI `render --output/-o` — write rendered result to a file (parents auto-created; failures leave no file behind)
 - **F17 collection diff** (Sep 8, 2026): `TemplateCollection.diff(other)` — added/removed names + per-template field-level changes, building on `Template.diff()`

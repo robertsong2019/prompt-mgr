@@ -231,6 +231,27 @@ def recent(limit: int):
 
 
 @main.command()
+def variables():
+    """Show which templates use each variable."""
+    from rich.table import Table
+
+    manager = PromptManager()
+    inventory = manager.variables_inventory()
+
+    if not inventory:
+        console.print("[yellow]No variables found in any template.[/yellow]")
+        return
+
+    table = Table(title="Variable Usage")
+    table.add_column("Variable", style="cyan")
+    table.add_column("Used By", justify="right")
+    table.add_column("Templates")
+    for var, info in inventory.items():
+        table.add_row(var, str(info["count"]), ", ".join(info["templates"]))
+    console.print(table)
+
+
+@main.command()
 @click.option("--output", "-o", type=click.Path(), default="templates.json", help="Output file")
 @click.option("--format", "-f", type=click.Choice(["json", "markdown"]), default="json", help="Export format")
 def export(output: str, format: str):
