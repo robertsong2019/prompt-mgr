@@ -400,8 +400,28 @@ for warning in template.validate():
 
 Format the template as a markdown block (name, tags, content fence).
 
+The content fence is **dynamic** (CommonMark fence semantics): if the content itself contains lines of backticks, the fence is chosen one longer than the longest backtick run at a content line start (`max(3, longest + 1)`), so the block can always be re-imported without data loss. Content without backtick lines gets the classic exact-3 fence.
+
 **Returns:**
 - `str`
+
+##### `from_markdown(md_block)` (classmethod)
+
+Parse a `to_markdown()` block back into a template (inverse of `to_markdown()`; also used by `TemplateCollection.import_markdown()`).
+
+The content fence closes only on a backtick run **at least as long as** the opening fence — a shorter backtick run inside the content is kept as content, not treated as the fence end. Blocks exported by older versions (exact-3 fences, no backtick lines in content) parse unchanged.
+
+**Parameters:**
+- `md_block` (str): Markdown block as produced by `to_markdown()`
+
+**Returns:**
+- `Template`
+
+**Example:**
+```python
+md = t.to_markdown()          # fence auto-sizes if content has ``` lines
+t2 = Template.from_markdown(md)  # round-trips without dropping lines
+```
 
 ##### `to_json()` / `from_json(json_str)` (classmethod)
 

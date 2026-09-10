@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `render()` substitution is literal-safe: backslashes in variable values are no longer interpreted as regex escapes
 
 ### Fixed
+- **Markdown fence safety** (Sep 11, 2026): `to_markdown()` / `from_markdown()` round-trip could **silently drop content lines** when a template's content contained a bare ```` ``` ```` line — the export fence closed early on re-import and everything up to the next ```` ``` ```` vanished with no error. Fix follows CommonMark fence semantics:
+  - `to_markdown()` picks a fence one longer than the longest backtick run at any content line start (`max(3, longest + 1)`); exact-3 fences unchanged for content without backtick lines
+  - `from_markdown()` closes only on a backtick run **at least as long as** the opening fence; shorter runs are kept as content
+  - Back-compat: all pre-fix blocks (exact-3 fences) round-trip byte-identically; caught red-first with 3 of 6 new tests verified failing on the old code (409 tests total)
 - Literal backslash corruption in variable substitution (`re.sub` replacement semantics → lambda-based literal substitution)
 
 ## [1.0.0] - 2026-03-18

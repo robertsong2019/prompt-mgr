@@ -215,8 +215,8 @@ t = mgr.get_template("code-review")
 
 t.render({"code": "...", "focus": "security"})  # render directly on the model
 t.validate()                                     # warn on empty content / unbalanced {{ }}
-t.to_markdown()                                  # formatted markdown block
-Template.from_markdown(md_block)                 # parse a to_markdown() block back — F16
+t.to_markdown()                                  # formatted markdown block (fence auto-sizes around ``` in content)
+Template.from_markdown(md_block)                 # parse a to_markdown() block back — F16, round-trip safe
 t.to_json() / Template.from_json(s)              # single-template (de)serialization
 t.diff(other)                                    # field-level changes + tag added/removed
 ```
