@@ -140,9 +140,16 @@ class Template:
         lines.append(f"**Created:** {self.created_at}  ")
         lines.append(f"**Updated:** {self.updated_at}")
         lines.append("")
-        lines.append("```")
+        # Fence safety: if the content itself contains lines of backticks, a
+        # naive ``` fence would close early on import and silently drop the
+        # lines in between. CommonMark rule: choose a fence strictly longer
+        # than any backtick run at the start of a content line.
+        import re
+        runs = [len(m.group(0)) for m in re.finditer(r'^`+', self.content, re.M)]
+        fence = "`" * max(3, (max(runs) + 1) if runs else 3)
+        lines.append(fence)
         lines.append(self.content)
-        lines.append("```")
+        lines.append(fence)
         return "\n".join(lines)
 
     @classmethod
@@ -172,17 +179,25 @@ class Template:
         updated_at = None
         content_lines: List[str] = []
         fence_open = False
+        fence_len = 0
 
         for raw in text.strip("\n").splitlines():
             stripped = raw.strip()
             if fence_open:
-                if stripped == "```":
+                # Close only on a backtick run at least as long as the
+                # opening fence (CommonMark): a shorter run stays content.
+                if (
+                    stripped.startswith("`")
+                    and set(stripped) == {"`"}
+                    and len(stripped) >= fence_len
+                ):
                     fence_open = False
                 else:
                     content_lines.append(raw)
                 continue
             if stripped.startswith("```"):
                 fence_open = True
+                fence_len = len(stripped)
             elif stripped.startswith("## ") and name is None:
                 name = stripped[3:].strip()
             elif (
