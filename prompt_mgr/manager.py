@@ -439,22 +439,24 @@ class PromptManager:
         """
         return self.collection.variables_inventory()
 
-    def rename_variable(self, old: str, new: str) -> dict:
+    def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all templates and persist.
 
         Affected templates get ``updated_at`` bumped and the store is
         saved once. A no-op rename (variable unused anywhere) skips
-        both, mirroring the bulk tag discipline.
+        both, mirroring the bulk tag discipline. ``dry_run=True``
+        returns the same report without persisting or bumping.
 
         Args:
             old: Current variable name (``\\w+``).
             new: New variable name (``\\w+``), different from ``old``.
+            dry_run: Preview only — never saves.
 
         Returns:
             Same report as ``TemplateCollection.rename_variable``.
         """
-        report = self.collection.rename_variable(old, new)
-        if report["total_replacements"]:
+        report = self.collection.rename_variable(old, new, dry_run=dry_run)
+        if not dry_run and report["total_replacements"]:
             for name in report["renamed"]:
                 self.collection.get(name).update_timestamp()
             self._save_templates()

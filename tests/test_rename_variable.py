@@ -143,3 +143,49 @@ def test_cli_rename_variable_error_exit(tmp_path, monkeypatch):
     PromptManager().add_template("t", "hi {{name}}")
     result = CliRunner().invoke(main, ["rename-variable", "name", "name"])
     assert result.exit_code != 0
+
+
+# ---------- F23: dry-run preview ----------
+
+def test_dry_run_reports_without_mutating():
+    c = _c(("a", "{{x}} twice {{x}}"), ("b", "{{x}}"))
+    report = c.rename_variable("x", "y", dry_run=True)
+    assert report == {"renamed": {"a": 2, "b": 1}, "total_replacements": 3}
+    assert c.get("a").content == "{{x}} twice {{x}}"
+    assert c.get("b").content == "{{x}}"
+
+
+def test_dry_run_report_equals_real_run():
+    c1 = _c(("a", "{{x}} {{x}}"), ("b", "no vars"))
+    c2 = _c(("a", "{{x}} {{x}}"), ("b", "no vars"))
+    dry = c1.rename_variable("x", "y", dry_run=True)
+    real = c2.rename_variable("x", "y")
+    assert dry == real == {"renamed": {"a": 2}, "total_replacements": 2}
+    # c1 untouched by its dry run
+    assert c1.get("a").content == "{{x}} {{x}}"
+
+
+def test_dry_run_still_validates_names():
+    c = _c(("a", "{{x}}"))
+    with pytest.raises(ValueError, match="identical"):
+        c.rename_variable("x", "x", dry_run=True)
+
+
+def test_manager_dry_run_no_persist_no_bump(mgr):
+    before = mgr.get_template("uses").updated_at
+    report = mgr.rename_variable("name", "user", dry_run=True)
+    assert report["total_replacements"] == 2
+    assert mgr.get_template("uses").updated_at == before
+    # Disk state unchanged
+    m2 = PromptManager()
+    assert m2.get_template("uses").content == "hello {{name}} twice {{name}}"
+
+
+def test_cli_dry_run_shows_report_without_writing(tmp_path, monkeypatch):
+    monkeypatch.setenv("PROMPT_MGR_DATA_DIR", str(tmp_path))
+    PromptManager().add_template("t", "hi {{name}}")
+    result = CliRunner().invoke(
+        main, ["rename-variable", "name", "user", "--dry-run"]
+    )
+    assert result.exit_code == 0
+    assert PromptManager().get_template("t").content == "hi {{name}}"

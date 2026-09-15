@@ -448,7 +448,7 @@ class TemplateCollection:
             )
         }
 
-    def rename_variable(self, old: str, new: str) -> dict:
+    def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all template contents.
 
         The write-side counterpart of ``variables_inventory`` (blast
@@ -459,6 +459,8 @@ class TemplateCollection:
         Args:
             old: Current variable name (``\\w+``).
             new: New variable name (``\\w+``), different from ``old``.
+            dry_run: If True, report what would change without
+                touching any content.
 
         Returns:
             {"renamed": {template_name: n_replacements},
@@ -486,9 +488,10 @@ class TemplateCollection:
                 lambda _m, _v="{{" + new + "}}": _v, template.content
             )
             if n:
-                template.content = content
                 renamed[name] = n
                 total += n
+                if not dry_run:
+                    template.content = content
         return {"renamed": renamed, "total_replacements": total}
 
     def sort_by(self, field: str = "name", reverse: bool = False) -> List[Template]:

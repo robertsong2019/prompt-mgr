@@ -219,11 +219,12 @@ def render(name: str, vars, output: Optional[str]):
 @main.command("rename-variable")
 @click.argument("old")
 @click.argument("new")
-def rename_variable(old: str, new: str):
+@click.option("--dry-run", is_flag=True, help="Preview the blast radius without writing")
+def rename_variable(old: str, new: str, dry_run: bool):
     """Rename a variable OLD -> NEW across all templates (write-side of `variables`)."""
     try:
         manager = PromptManager()
-        report = manager.rename_variable(old, new)
+        report = manager.rename_variable(old, new, dry_run=dry_run)
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise click.Abort()
@@ -232,7 +233,8 @@ def rename_variable(old: str, new: str):
         console.print(f"[yellow]No templates use variable '{old}' — nothing renamed.[/yellow]")
         return
 
-    table = Table(title=f"Renamed variable: {old} -> {new}")
+    verb = "Would rename" if dry_run else "Renamed"
+    table = Table(title=f"{verb} variable: {old} -> {new}")
     table.add_column("Template", style="cyan")
     table.add_column("Replacements", justify="right")
     for name, n in report["renamed"].items():
