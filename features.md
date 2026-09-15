@@ -44,6 +44,7 @@
 - [x] **F19**: `TemplateCollection.search(query, regex=True)` + `PromptManager.search_templates(regex)` + CLI `search --regex` — regex search ✅ 2026-09-08
 - [x] **F20**: `TemplateCollection.variables_inventory()` + `PromptManager.variables_inventory()` + CLI `variables` — variable-level usage aggregation (blast radius before renaming a variable) ✅ 2026-09-09
 - [x] **F21**: `PromptManager.bulk_add_tags(names, tags)` / `bulk_remove_tags(names, tags)` — batch tag ops, unknown names reported not raised ✅ 2026-09-09
+- [x] **F22**: `TemplateCollection.rename_variable(old, new)` / `PromptManager.rename_variable()` + CLI `rename-variable` — write-side of F20 inventory: `{{old}}`→`{{new}}` across templates, delimiter-anchored, no-op on unused ✅ 2026-09-15
 - [x] **Bugfix**: `Template.render()` backslash corruption — literal lambda substitution ✅ 2026-08-17
 
 ## Priorities

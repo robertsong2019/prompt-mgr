@@ -448,6 +448,49 @@ class TemplateCollection:
             )
         }
 
+    def rename_variable(self, old: str, new: str) -> dict:
+        """Rename a variable across all template contents.
+
+        The write-side counterpart of ``variables_inventory`` (blast
+        radius): replaces every ``{{old}}`` placeholder with ``{{new}}``.
+        Delimiters are part of the match, so renaming ``topic`` never
+        touches ``{{topic_id}}``.
+
+        Args:
+            old: Current variable name (``\\w+``).
+            new: New variable name (``\\w+``), different from ``old``.
+
+        Returns:
+            {"renamed": {template_name: n_replacements},
+             "total_replacements": n} — ``renamed`` sorted by template
+            name. Renaming a variable nothing uses is a no-op, not an
+            error.
+
+        Raises:
+            ValueError: If either name is not a valid variable name or
+                the two names are identical.
+        """
+        import re as _re
+
+        for label, name in (("old", old), ("new", new)):
+            if not _re.fullmatch(r"\w+", str(name)):
+                raise ValueError(f"Invalid {label} variable name: {name!r}")
+        if old == new:
+            raise ValueError("New variable name is identical to the old one")
+
+        pattern = _re.compile(r"\{\{" + _re.escape(old) + r"\}\}")
+        renamed, total = {}, 0
+        for name in sorted(self.templates):
+            template = self.templates[name]
+            content, n = pattern.subn(
+                lambda _m, _v="{{" + new + "}}": _v, template.content
+            )
+            if n:
+                template.content = content
+                renamed[name] = n
+                total += n
+        return {"renamed": renamed, "total_replacements": total}
+
     def sort_by(self, field: str = "name", reverse: bool = False) -> List[Template]:
         """Return templates sorted by a given field.
 

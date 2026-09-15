@@ -216,6 +216,31 @@ def render(name: str, vars, output: Optional[str]):
         raise click.Abort()
 
 
+@main.command("rename-variable")
+@click.argument("old")
+@click.argument("new")
+def rename_variable(old: str, new: str):
+    """Rename a variable OLD -> NEW across all templates (write-side of `variables`)."""
+    try:
+        manager = PromptManager()
+        report = manager.rename_variable(old, new)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise click.Abort()
+
+    if not report["total_replacements"]:
+        console.print(f"[yellow]No templates use variable '{old}' — nothing renamed.[/yellow]")
+        return
+
+    table = Table(title=f"Renamed variable: {old} -> {new}")
+    table.add_column("Template", style="cyan")
+    table.add_column("Replacements", justify="right")
+    for name, n in report["renamed"].items():
+        table.add_row(name, str(n))
+    console.print(table)
+    console.print(f"[green]✓[/green] {report['total_replacements']} replacement(s) in {len(report['renamed'])} template(s).")
+
+
 @main.command()
 @click.option("--limit", "-n", default=10, help="Number of recent templates")
 def recent(limit: int):

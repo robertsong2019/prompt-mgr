@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **F22 variable rename** (Sep 15, 2026): `TemplateCollection.rename_variable(old, new)` / `PromptManager.rename_variable()` + CLI `rename-variable` — replace `{{old}}` with `{{new}}` across all templates (write-side of F20's blast-radius inventory); delimiter-anchored so `topic` never touches `{{topic_id}}`; unused variable is a no-op report, affected templates get `updated_at` bumped with a single save
 - **F20 variables inventory** (Sep 9, 2026): `TemplateCollection.variables_inventory()` / `PromptManager.variables_inventory()` + CLI `variables` — variable-level usage aggregation (variable → count + sorted template names, count desc / name asc); check the blast radius before renaming a variable
 - **F21 bulk tag operations** (Sep 9, 2026): `PromptManager.bulk_add_tags()` / `bulk_remove_tags()` — batch tag changes across templates; unknown names reported in `missing` instead of raising, single save at end, no-op edits skip `updated_at` bump
 - **F19 regex search** (Sep 8, 2026): `TemplateCollection.search()` / `PromptManager.search_templates()` gain `regex=True`; CLI `search --regex` — case-sensitive pattern matching over name/content/description, invalid patterns rejected
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **F1-F15 feature series** (Aug 2026): `Template.render()` / `to_markdown()` / `diff()` / `validate()` / `to_json()` / `from_json()`, `TemplateCollection.find_duplicates()` / `sort_by()` / `merge()` / `filter()` / `group_by_tag()` / `find_similar()` (token Jaccard) / `search_by_variables()` (any/all) / `content_stats()` / `export_markdown()` (TOC + tag filter)
 - Manager: `clone_template()`, `rename_template()`, `add_tag()` / `remove_tag()`, `recent_templates()`, `get_stats()`
 - CLI: `show` and `recent` commands
-- Test suite 52 → 381 tests (99% coverage)
+- Test suite 52 → 427 tests (99% coverage)
 - Comprehensive documentation suite
   - API Reference (docs/API_REFERENCE.md)
   - Tutorial (docs/TUTORIAL.md)
