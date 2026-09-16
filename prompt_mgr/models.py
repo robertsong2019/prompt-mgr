@@ -79,6 +79,12 @@ class Template:
                     # Lone { not part of {{
                     warnings.append(f"Lone '{{' detected at position {i} — did you mean '{{{{'?" )
                     break  # one warning is enough
+        for i, ch in enumerate(self.content):
+            if ch == '}' and (i + 1 >= len(self.content) or self.content[i + 1] != '}'):
+                if i == 0 or self.content[i - 1] != '}':
+                    # Lone } not part of }}
+                    warnings.append(f"Lone '}}' detected at position {i} — did you mean '}}}}'?" )
+                    break  # one warning is enough
         return warnings
 
     def extract_variables(self) -> List[str]:
@@ -447,6 +453,25 @@ class TemplateCollection:
                 usage.items(), key=lambda x: (-len(x[1]), x[0])
             )
         }
+
+    def validate_all(self) -> dict:
+        """Lint sweep: run :meth:`Template.validate` on every template.
+
+        Collection-level companion to the per-template ``validate()``.
+        Read-only. Use it as a health check after bulk edits
+        (``rename_variable``, ``bulk_add_tags``, markdown imports).
+
+        Returns:
+            Dictionary mapping template name to its list of warning
+            strings, **only for templates that have warnings**, sorted by
+            name. Empty dict means every template passes validation.
+        """
+        report = {
+            t.name: warnings
+            for t in sorted(self.templates.values(), key=lambda t: t.name)
+            if (warnings := t.validate())
+        }
+        return report
 
     def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all template contents.

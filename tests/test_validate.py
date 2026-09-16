@@ -38,6 +38,13 @@ def test_validate_lone_brace():
     assert any("Lone" in x for x in w)
 
 
+def test_validate_lone_close_brace():
+    """Symmetric lone-} typo is caught (gap found by F24 doctor RED tests)."""
+    t = Template(name="lone-close", content="Hello name} today")
+    w = t.validate()
+    assert any("Lone" in x for x in w)
+
+
 def test_validate_no_warnings_static():
     t = Template(name="static", content="Just plain text with no variables")
     assert t.validate() == []

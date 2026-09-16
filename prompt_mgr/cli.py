@@ -258,6 +258,28 @@ def recent(limit: int):
 
 
 @main.command()
+def doctor():
+    """Health check: validate all templates and report warnings."""
+    from rich.table import Table
+
+    manager = PromptManager()
+    report = manager.validate_all()
+    total = len(manager.collection.templates)
+
+    if not report:
+        console.print(f"[green]OK:[/green] all {total} template(s) passed validation, no issues found.")
+        return
+
+    n_issues = sum(len(ws) for ws in report.values())
+    table = Table(title=f"{len(report)}/{total} template(s) with issues ({n_issues} warnings)")
+    table.add_column("Template", style="cyan")
+    table.add_column("Warnings")
+    for name, warnings in report.items():
+        table.add_row(name, "\n".join(warnings))
+    console.print(table)
+
+
+@main.command()
 def variables():
     """Show which templates use each variable."""
     from rich.table import Table

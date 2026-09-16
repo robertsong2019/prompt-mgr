@@ -439,6 +439,15 @@ class PromptManager:
         """
         return self.collection.variables_inventory()
 
+    def validate_all(self) -> dict:
+        """Health check: warnings for every invalid template.
+
+        Read-only forward to :meth:`TemplateCollection.validate_all`.
+        Returns ``{name: [warnings]}`` sorted by name; empty dict when
+        all templates pass validation.
+        """
+        return self.collection.validate_all()
+
     def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all templates and persist.
 
