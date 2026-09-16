@@ -46,6 +46,8 @@
 - [x] **F21**: `PromptManager.bulk_add_tags(names, tags)` / `bulk_remove_tags(names, tags)` — batch tag ops, unknown names reported not raised ✅ 2026-09-09
 - [x] **F22**: `TemplateCollection.rename_variable(old, new)` / `PromptManager.rename_variable()` + CLI `rename-variable` — write-side of F20 inventory: `{{old}}`→`{{new}}` across templates, delimiter-anchored, no-op on unused ✅ 2026-09-15
 - [x] **F23**: `rename_variable(dry_run=True)` + CLI `--dry-run` — blast-radius preview without writing ✅ 2026-09-15
+- [x] **F24**: `TemplateCollection.validate_all()` / `PromptManager.validate_all()` + CLI `doctor` — collection-wide lint sweep (offending-only, name-sorted, read-only); closed lone-`}` validator gap surfaced by RED tests ✅ 2026-09-16
+- [x] **F25**: `PromptManager.snapshot()` + CLI `snapshot` — timestamped store backup (flush-first contract, same-second collision guard, snapshots/ subdir) ✅ 2026-09-16
 - [x] **Bugfix**: `Template.render()` backslash corruption — literal lambda substitution ✅ 2026-08-17
 
 ## Priorities
