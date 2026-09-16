@@ -448,6 +448,35 @@ class PromptManager:
         """
         return self.collection.validate_all()
 
+    def snapshot(self) -> Path:
+        """Write a timestamped backup of the template store.
+
+        Flushes in-memory state first, so the snapshot always equals
+        what the manager currently holds (edits made directly on
+        ``collection`` are captured too). The main store is left
+        untouched. Snapshots land in ``snapshots/`` next to the store as
+        ``templates-YYYYMMDD-HHMMSS.json``; same-second collisions get a
+        ``.1``, ``.2``... suffix. Run before risky bulk operations
+        (``rename_variable``, markdown imports).
+
+        Returns:
+            Path to the created snapshot file.
+        """
+        import shutil
+        from datetime import datetime
+
+        self._save_templates()  # flush so snapshot == current in-memory state
+        snap_dir = self.templates_file.parent / "snapshots"
+        snap_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        dest = snap_dir / f"templates-{stamp}.json"
+        n = 1
+        while dest.exists():  # same-second collision guard
+            dest = snap_dir / f"templates-{stamp}.{n}.json"
+            n += 1
+        shutil.copyfile(self.templates_file, dest)
+        return dest
+
     def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all templates and persist.
 

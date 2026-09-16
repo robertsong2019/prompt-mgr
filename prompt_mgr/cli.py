@@ -258,6 +258,14 @@ def recent(limit: int):
 
 
 @main.command()
+def snapshot():
+    """Save a timestamped backup of the template store."""
+    manager = PromptManager()
+    dest = manager.snapshot()
+    console.print(f"[green]Snapshot written:[/green] {dest}")
+
+
+@main.command()
 def doctor():
     """Health check: validate all templates and report warnings."""
     from rich.table import Table
