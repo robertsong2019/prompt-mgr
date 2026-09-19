@@ -1,5 +1,6 @@
 """CLI interface for prompt-mgr."""
 
+import json
 import click
 from rich.console import Console
 from rich.table import Table
@@ -263,6 +264,46 @@ def snapshot():
     manager = PromptManager()
     dest = manager.snapshot()
     console.print(f"[green]Snapshot written:[/green] {dest}")
+
+
+@main.command("snapshots")
+def snapshots():
+    """List existing store snapshots, newest first."""
+    from rich.table import Table
+    from datetime import datetime
+
+    manager = PromptManager()
+    entries = manager.list_snapshots()
+    if not entries:
+        console.print("No snapshots yet — run [bold]pmgr snapshot[/bold] first.")
+        return
+    table = Table(title=f"Snapshots ({len(entries)})")
+    table.add_column("Name")
+    table.add_column("Size", justify="right")
+    table.add_column("Modified")
+    for e in entries:
+        stamp = datetime.fromtimestamp(e["modified"]).strftime("%Y-%m-%d %H:%M:%S")
+        table.add_row(e["name"], f"{e['size_bytes']:,}", stamp)
+    console.print(table)
+
+
+@main.command()
+@click.argument("name")
+def restore(name: str):
+    """Roll the store back to a snapshot (takes a safety snapshot first)."""
+    manager = PromptManager()
+    try:
+        report = manager.restore(name)
+    except FileNotFoundError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+    except (ValueError, json.JSONDecodeError) as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+    console.print(
+        f"[green]Restored {report['restored']} template(s) from[/green] {report['snapshot']}\n"
+        f"Safety snapshot of pre-restore state: {report['safety_snapshot']}"
+    )
 
 
 @main.command()

@@ -48,6 +48,7 @@
 - [x] **F23**: `rename_variable(dry_run=True)` + CLI `--dry-run` — blast-radius preview without writing ✅ 2026-09-15
 - [x] **F24**: `TemplateCollection.validate_all()` / `PromptManager.validate_all()` + CLI `doctor` — collection-wide lint sweep (offending-only, name-sorted, read-only); closed lone-`}` validator gap surfaced by RED tests ✅ 2026-09-16
 - [x] **F25**: `PromptManager.snapshot()` + CLI `snapshot` — timestamped store backup (flush-first contract, same-second collision guard, snapshots/ subdir) ✅ 2026-09-16
+- [x] **F26**: `PromptManager.list_snapshots()` / `PromptManager.restore(name)` + CLI `snapshots` / `restore` — closes F25 export-only gap: inventory (newest-first) + rollback with auto safety-snapshot (restore is reversible); path-traversal name guard, corrupt-JSON store-untouched contract ✅ 2026-09-19
 - [x] **Bugfix**: `Template.render()` backslash corruption — literal lambda substitution ✅ 2026-08-17
 
 ## Priorities

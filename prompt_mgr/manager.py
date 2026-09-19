@@ -1,6 +1,8 @@
 """Core manager for prompt templates."""
 
 import json
+import os
+import re
 from typing import List, Optional, Dict
 from pathlib import Path
 
@@ -476,6 +478,70 @@ class PromptManager:
             n += 1
         shutil.copyfile(self.templates_file, dest)
         return dest
+
+    def list_snapshots(self) -> list:
+        """Inventory existing snapshots, newest first.
+
+        Only files matching ``templates-*.json`` in the snapshots
+        directory are reported. Each entry carries ``name``, ``path``,
+        ``size_bytes`` and ``modified`` (epoch mtime). Missing or empty
+        directory yields an empty list.
+        """
+        snap_dir = self.templates_file.parent / "snapshots"
+        if not snap_dir.is_dir():
+            return []
+        entries = [
+            {
+                "name": p.name,
+                "path": p,
+                "size_bytes": p.stat().st_size,
+                "modified": p.stat().st_mtime,
+            }
+            for p in snap_dir.iterdir()
+            if p.is_file() and re.fullmatch(r"templates-\d{8}-\d{6}(\.\d+)?\.json", p.name)
+        ]
+        entries.sort(key=lambda e: (e["modified"], e["name"]), reverse=True)
+        return entries
+
+    def restore(self, name: str) -> dict:
+        """Roll the store back to a snapshot.
+
+        Takes a safety snapshot of the CURRENT state first, so a restore
+        is itself reversible (the pre-restore state survives in
+        ``snapshots/``). Then replaces the in-memory collection with the
+        snapshot's contents and rewrites the store file.
+
+        Args:
+            name: Snapshot filename as reported by :meth:`list_snapshots`
+                (e.g. ``templates-20260919-220000.json``). Must be a bare
+                filename — separators or ``..`` are rejected.
+
+        Returns:
+            ``{"restored": <template count>, "snapshot": <path>,
+            "safety_snapshot": <filename>}``
+
+        Raises:
+            ValueError: name is empty, contains separators or ``..``.
+            FileNotFoundError: no such snapshot.
+            json.JSONDecodeError: snapshot is corrupt (store untouched).
+        """
+        if not name or os.sep in name or (os.altsep and os.altsep in name) or ".." in name:
+            raise ValueError(f"Invalid snapshot name: {name!r}")
+        snap_path = self.templates_file.parent / "snapshots" / name
+        if not snap_path.is_file():
+            raise FileNotFoundError(f"Snapshot not found: {name}")
+
+        with open(snap_path, "r", encoding="utf-8") as f:
+            data = json.load(f)  # corrupt -> raises before any write
+
+        safety = self.snapshot()  # flush current state + copy: reversible
+        self.collection = TemplateCollection.from_dict(data)
+        self._save_templates()
+        return {
+            "restored": len(self.collection.list_all()),
+            "snapshot": str(snap_path),
+            "safety_snapshot": safety.name,
+        }
 
     def rename_variable(self, old: str, new: str, dry_run: bool = False) -> dict:
         """Rename a variable across all templates and persist.

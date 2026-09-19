@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **F26 snapshot restore** (Sep 19, 2026): `PromptManager.list_snapshots()` / `PromptManager.restore(name)` + CLI `snapshots` / `restore` — closes F25's export-only gap: inventory existing backups (newest first) and roll the store back; restore takes a safety snapshot of the current state first, so a restore is itself reversible; corrupt snapshots raise before any write, and snapshot names are guarded against path traversal
 - **F23 dry-run rename** (Sep 15, 2026): `rename_variable(..., dry_run=True)` + CLI `rename-variable --dry-run` — preview the full blast-radius report (template → replacement count) without touching content, timestamps, or the store
 - **F22 variable rename** (Sep 15, 2026): `TemplateCollection.rename_variable(old, new)` / `PromptManager.rename_variable()` + CLI `rename-variable` — replace `{{old}}` with `{{new}}` across all templates (write-side of F20's blast-radius inventory); delimiter-anchored so `topic` never touches `{{topic_id}}`; unused variable is a no-op report, affected templates get `updated_at` bumped with a single save
 - **F20 variables inventory** (Sep 9, 2026): `TemplateCollection.variables_inventory()` / `PromptManager.variables_inventory()` + CLI `variables` — variable-level usage aggregation (variable → count + sorted template names, count desc / name asc); check the blast radius before renaming a variable
