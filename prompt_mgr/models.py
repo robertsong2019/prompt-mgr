@@ -400,10 +400,26 @@ class TemplateCollection:
 
     @classmethod
     def from_dict(cls, data: dict) -> "TemplateCollection":
-        """Create collection from dictionary."""
+        """Create collection from dictionary.
+
+        Raises:
+            ValueError: data is not a template-store dict (missing or
+                non-dict ``templates`` member, or malformed template
+                entry). Guards destructive callers (restore/import)
+                against silently wiping the store with valid-JSON
+                foreign documents.
+        """
+        if not isinstance(data, dict) or not isinstance(data.get("templates"), dict):
+            raise ValueError(
+                "not a template store: expected an object with a "
+                f"'templates' object, got {type(data).__name__}"
+            )
         collection = cls()
-        for name, template_data in data.get("templates", {}).items():
-            collection.add(Template.from_dict(template_data))
+        for name, template_data in data["templates"].items():
+            try:
+                collection.add(Template.from_dict(template_data))
+            except (KeyError, TypeError) as e:
+                raise ValueError(f"invalid template entry {name!r}: {e}") from e
         return collection
 
     def to_json(self) -> str:

@@ -224,6 +224,14 @@ def test_collection_from_dict_empty():
 
 
 def test_collection_from_dict_missing_templates_key():
-    """from_dict handles missing 'templates' key."""
-    col = TemplateCollection.from_dict({})
+    """from_dict REJECTS a missing 'templates' key (contract tightened 2026-09-20).
+
+    Previously {} silently produced an empty collection — which made
+    restore() overwrite the store with an empty state when handed a
+    valid-JSON foreign document. The legit way to express an empty
+    store is {"templates": {}}, pinned below.
+    """
+    with pytest.raises(ValueError):
+        TemplateCollection.from_dict({})
+    col = TemplateCollection.from_dict({"templates": {}})
     assert len(col.list_all()) == 0

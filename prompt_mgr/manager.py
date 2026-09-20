@@ -34,10 +34,33 @@ class PromptManager:
             with open(self.templates_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             return TemplateCollection.from_dict(data)
-        except (json.JSONDecodeError, KeyError) as e:
-            # If file is corrupted, start fresh
-            print(f"Warning: Could not load templates file: {e}")
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            # Corrupted or foreign store: start fresh, but quarantine the
+            # unreadable file first — the next save would otherwise clobber
+            # it and destroy every template irrecoverably.
+            self._quarantine_store(e)
             return TemplateCollection()
+
+    def _quarantine_store(self, reason: Exception) -> None:
+        """Preserve an unreadable store file beside itself before a fresh-state save overwrites it."""
+        import shutil
+        from datetime import datetime
+
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        backup = self.templates_file.with_name(
+            f"{self.templates_file.name}.corrupt-{stamp}.bak"
+        )
+        try:
+            shutil.copy2(self.templates_file, backup)
+            print(
+                f"Warning: Could not load templates file: {reason}\n"
+                f"Corrupt store preserved at: {backup}"
+            )
+        except OSError as e:
+            print(
+                f"Warning: Could not load templates file: {reason} "
+                f"(quarantine failed: {e})"
+            )
 
     def _save_templates(self) -> None:
         """Save templates to file."""
@@ -521,7 +544,9 @@ class PromptManager:
             "safety_snapshot": <filename>}``
 
         Raises:
-            ValueError: name is empty, contains separators or ``..``.
+            ValueError: name is empty, contains separators or ``..``;
+                snapshot is syntactically valid JSON but not a template
+                store (store untouched).
             FileNotFoundError: no such snapshot.
             json.JSONDecodeError: snapshot is corrupt (store untouched).
         """
@@ -532,10 +557,11 @@ class PromptManager:
             raise FileNotFoundError(f"Snapshot not found: {name}")
 
         with open(snap_path, "r", encoding="utf-8") as f:
-            data = json.load(f)  # corrupt -> raises before any write
+            data = json.load(f)  # syntax corruption raises before any write
+        validated = TemplateCollection.from_dict(data)  # structural corruption raises before any write
 
         safety = self.snapshot()  # flush current state + copy: reversible
-        self.collection = TemplateCollection.from_dict(data)
+        self.collection = validated
         self._save_templates()
         return {
             "restored": len(self.collection.list_all()),
