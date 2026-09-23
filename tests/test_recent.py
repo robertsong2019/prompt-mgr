@@ -83,6 +83,47 @@ def test_recent_does_not_mutate_collection():
     assert c.get("test") is not None
     assert len(c.list_all()) == 1
 
+def test_recent_negative_n_raises():
+    """recent(-n) must raise, not silently return 'all but n oldest'.
+
+    RED probe 2026-09-24: recent(-3) on 5 templates returned the 2 NEWEST
+    (slice [:-3] on a newest-first list) with exit 0 — silent nonsense
+    (negative-number gate family, 3rd instance after session-archiver
+    cleanOldArchives(-1) and agent-memory-kit prune -5).
+    """
+    c = TemplateCollection()
+    for i in range(5):
+        t = Template(name=f"t{i}", content=f"c{i}")
+        t.updated_at = f"2026-08-{18-i:02d}T10:00:00"
+        c.add(t)
+    with pytest.raises(ValueError) as exc_info:
+        c.recent(-3)
+    assert "-3" in str(exc_info.value)  # error names the bad value
+
+
+def test_recent_zero_is_legal():
+    """recent(0) stays legal and returns [] (legality pin for the gate)."""
+    c = TemplateCollection()
+    for i in range(3):
+        t = Template(name=f"t{i}", content=f"c{i}")
+        t.updated_at = f"2026-08-{18-i:02d}T10:00:00"
+        c.add(t)
+    assert c.recent(0) == []
+
+
+def test_manager_recent_templates_negative_raises(tmp_path):
+    """Manager forwarding preserves the gate (PromptManager.recent_templates)."""
+    os.environ["PROMPT_MGR_DATA_DIR"] = str(tmp_path)
+    try:
+        from prompt_mgr.manager import PromptManager
+        m = PromptManager()
+        m.add_template(name="only", content="hello")
+        with pytest.raises(ValueError):
+            m.recent_templates(n=-5)
+    finally:
+        del os.environ["PROMPT_MGR_DATA_DIR"]
+
+
 # --- CLI tests ---
 
 def test_cli_recent_empty(runner):
@@ -111,3 +152,23 @@ def test_cli_recent_limits_output(runner):
     # Only the most recent should appear
     lines = [l for l in result.output.split("\n") if "📌" in l]
     assert len(lines) == 1
+
+
+def test_cli_recent_negative_limit_rejected(runner):
+    """CLI recent -n -3 is a usage error, not silent wrong output.
+
+    RED probe 2026-09-24: exit 0 and printed 2 template rows for -n -3.
+    """
+    for i in range(3):
+        runner.invoke(main, ["add", f"n{i}", "-c", f"content {i}"])
+    result = runner.invoke(main, ["recent", "-n", "-3"])
+    assert result.exit_code != 0
+    assert "📌" not in result.output  # no template rows leaked
+
+
+def test_cli_recent_zero_limit_legal(runner):
+    """CLI recent -n 0 stays legal: exit 0, empty-state message."""
+    runner.invoke(main, ["add", "solo", "-c", "hello"])
+    result = runner.invoke(main, ["recent", "-n", "0"])
+    assert result.exit_code == 0
+    assert "No templates found" in result.output

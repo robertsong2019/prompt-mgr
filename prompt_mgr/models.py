@@ -823,7 +823,13 @@ class TemplateCollection:
         
         Returns:
             List of templates sorted by updated_at descending, capped at n.
+
+        Raises:
+            ValueError: If n is negative (a bare ``[:n]`` slice would
+                silently return "all but n oldest" instead of an error).
         """
+        if n < 0:
+            raise ValueError(f"n must be non-negative, got {n}")
         return sorted(
             self.templates.values(),
             key=lambda t: t.updated_at,

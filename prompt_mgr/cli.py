@@ -245,7 +245,7 @@ def rename_variable(old: str, new: str, dry_run: bool):
 
 
 @main.command()
-@click.option("--limit", "-n", default=10, help="Number of recent templates")
+@click.option("--limit", "-n", type=click.IntRange(min=0), default=10, help="Number of recent templates")
 def recent(limit: int):
     """Show recently updated templates."""
     manager = PromptManager()
