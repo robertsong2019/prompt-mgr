@@ -10,6 +10,7 @@ A lightweight CLI tool for managing AI prompt templates with variable substituti
 - 📝 **Variable Substitution**: Use `{{variable}}` syntax for dynamic prompts (literal-backslash safe)
 - 🎨 **Rendering**: Render final prompts with variable values
 - 🧰 **Template Tools**: `diff()`, `validate()`, `to_markdown()`, `from_markdown()`, similarity search, duplicate detection
+- 🛡️ **Safety Net**: Timestamped store snapshots with one-command restore (auto safety snapshot), health checks, variable inventory
 - 📊 **Statistics**: Collection stats, content metrics, and tag summaries
 - 📦 **Import/Export**: Share templates between systems (JSON and single-doc Markdown)
 
@@ -138,8 +139,65 @@ prompt-mgr edit my-template
 Delete a template.
 
 ```bash
-prompt-mgr delete my-template
+prompt-mgr delete my-template          # asks for confirmation
+prompt-mgr delete my-template --yes    # skip confirmation
 ```
+
+> **Note for scripts:** a failed deletion (e.g. store write error) prints an error but still exits 0 — only a missing template aborts with exit 1. Parse output if you need strict failure detection.
+
+### `prompt-mgr variables`
+Show which templates use each variable — the read-side inventory.
+
+```bash
+prompt-mgr variables
+```
+
+Output: a table of variable → usage count → template names. Use it before renaming to check the blast radius.
+
+### `prompt-mgr rename-variable <old> <new>`
+Rename a variable across all templates (write-side of `variables`).
+
+```bash
+prompt-mgr rename-variable lang language --dry-run   # preview affected templates
+prompt-mgr rename-variable lang language             # apply
+```
+
+Options:
+- `--dry-run`: Preview replacements per template without writing
+
+### `prompt-mgr snapshot`
+Save a timestamped backup of the template store.
+
+```bash
+prompt-mgr snapshot
+```
+
+Snapshots are written next to the live store. Cheap enough to run before risky bulk operations.
+
+### `prompt-mgr snapshots`
+List existing store snapshots, newest first.
+
+```bash
+prompt-mgr snapshots
+```
+
+### `prompt-mgr restore <snapshot>`
+Roll the store back to a snapshot. Takes a safety snapshot of the current state first, so a bad restore is itself recoverable.
+
+```bash
+prompt-mgr restore templates-2026-09-26T040000.json
+```
+
+Exit code is 1 if the snapshot is missing or corrupted.
+
+### `prompt-mgr doctor`
+Health check: validate all templates and report warnings.
+
+```bash
+prompt-mgr doctor
+```
+
+Flags things like unused variables or malformed content. Empty output means all templates passed.
 
 ### `prompt-mgr export`
 Export templates to JSON.

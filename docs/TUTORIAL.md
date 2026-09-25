@@ -194,7 +194,13 @@ prompt-mgr update code-review \
 prompt-mgr delete old-template
 ```
 
-You'll be asked for confirmation unless you use `--force`.
+You'll be asked for confirmation unless you use `--yes`:
+
+```bash
+prompt-mgr delete old-template --yes
+```
+
+> **Tip:** about to delete or bulk-edit many templates? Take a snapshot first — see [Snapshots & Restore](#snapshots--restore) below.
 
 ---
 
@@ -256,6 +262,42 @@ prompt-mgr import --input shared-templates.json --overwrite
 ```
 
 **Use Case:** Share templates with your team or sync between machines.
+
+### Snapshots & Restore
+
+Templates accumulate real value over time. Before risky operations — bulk imports, variable renames, hand-editing the store file — take a timestamped backup:
+
+```bash
+prompt-mgr snapshot
+# Snapshot written: ~/.prompt-mgr/snapshots/templates-20260926-040000.json
+
+prompt-mgr snapshots   # list all snapshots, newest first
+```
+
+If something goes wrong, roll back:
+
+```bash
+prompt-mgr restore templates-20260926-040000.json
+```
+
+The key concept: **restore is itself reversible**. Before overwriting your store, `restore` automatically takes a safety snapshot of the *current* (broken) state — so you can flip back and forth until you find the version you want. A corrupt or missing snapshot aborts with exit code 1 and leaves the store untouched.
+
+Two companion commands round out the maintenance toolkit:
+
+```bash
+# Health check: warns about invalid/unused templates
+prompt-mgr doctor
+
+# Inventory: which templates use which variables
+prompt-mgr variables
+```
+
+`variables` is the read side of a refactor pair — check the blast radius, then rename everywhere at once:
+
+```bash
+prompt-mgr rename-variable lang language --dry-run   # preview per-template impact
+prompt-mgr rename-variable lang language             # apply + persist
+```
 
 ### Custom Storage Location
 
@@ -521,7 +563,7 @@ Check what variables are needed:
 
 ```bash
 # View template
-prompt-mgr get my-template
+prompt-mgr show my-template
 
 # Extract variables (Python)
 python -c "

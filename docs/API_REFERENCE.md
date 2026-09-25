@@ -636,6 +636,71 @@ Detect templates with identical content.
 **Returns:**
 - `dict`: SHA-256 content hash → sorted list of template names sharing that content. Only groups of 2+ are included.
 
+##### `variables_inventory()`
+
+Variable-level usage inventory of the store — the read-side companion to `rename_variable()`.
+
+**Returns:**
+- `dict`: variable name → `{"count": n_templates, "templates": sorted names}`, sorted by count descending, then variable name ascending.
+
+```python
+inv = manager.variables_inventory()
+# {"code": {"count": 3, "templates": ["code-review", ...]}, ...}
+```
+
+##### `rename_variable(old, new, dry_run=False)`
+
+Rename a variable across all templates and persist. Affected templates get `updated_at` bumped and the store is saved once; a no-op rename (variable unused anywhere) skips both.
+
+**Args:**
+- `old`: Current variable name (`\w+`)
+- `new`: New variable name (`\w+`), different from `old`
+- `dry_run`: Preview only — never saves or bumps timestamps
+
+**Returns:**
+- `dict`: `{"renamed": {template: n_replacements}, "total_replacements": n}`
+
+**Raises:**
+- `ValueError`: invalid names, or `old == new`
+
+##### `snapshot()`
+
+Write a timestamped backup of the template store. Flushes in-memory state first, so the snapshot always equals what the manager currently holds; the main store is left untouched.
+
+Snapshots land in `snapshots/` next to the store as `templates-YYYYMMDD-HHMMSS.json`; same-second collisions get a `.1`, `.2`… suffix.
+
+**Returns:**
+- `Path`: to the created snapshot file
+
+##### `list_snapshots()`
+
+Inventory existing snapshots, newest first. Only files matching `templates-*.json` in the snapshots directory are reported.
+
+**Returns:**
+- `list[dict]`: each entry carries `name`, `path`, `size_bytes`, `modified` (epoch mtime). Missing/empty directory yields `[]`.
+
+##### `restore(name)`
+
+Roll the store back to a snapshot. Takes a safety snapshot of the CURRENT state first, so a restore is itself reversible.
+
+**Args:**
+- `name`: Snapshot filename as reported by `list_snapshots()` (bare filename — separators or `..` are rejected)
+
+**Returns:**
+- `dict`: `{"restored": n, "snapshot": path, "safety_snapshot": filename}`
+
+**Raises:**
+- `ValueError`: empty name, separators/`..`, or the file is valid JSON but not a template store (store untouched)
+- `FileNotFoundError`: no such snapshot
+- `json.JSONDecodeError`: snapshot is corrupt (store untouched)
+
+##### `validate_all()`
+
+Health check: warnings for every invalid template (what `prompt-mgr doctor` reports).
+
+**Returns:**
+- `dict`: `{name: [warnings]}` sorted by name; empty dict when all templates pass. Read-only.
+
 ---
 
 ## Utility Functions
